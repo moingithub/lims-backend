@@ -1,0 +1,66 @@
+GET {{baseUrl}}
+
+
+### Authenticate (login)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@lims.com",
+  "password": "admin123!"
+}
+
+### Authenticate (login)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "moin@esoftech.com",
+  "password": "securepassword"
+}
+
+### Example: invalid credentials
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@lims.com",
+  "password": "wrong"
+}
+
+### Example successful response
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@lims.com",
+    "role_id": 1,
+    "active": true
+  },
+  "role": {
+    "id": 1,
+    "role_name": "Administrator"
+  },
+  "permissions": [
+    {
+      "id": 1,
+      "role_id": 1,
+      "module_id": 1,
+      "active": true,
+      "created_by": 1,
+      "module": { "id": 1, "module_name": "Dashboard" }
+    }
+  ],
+  "token": "<jwt-token-here>"
+}
+
+### Example error response
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": "Invalid credentials"
+}

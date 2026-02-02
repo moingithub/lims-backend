@@ -1,0 +1,37 @@
+### List roles
+GET {{baseUrl}}/roles
+Authorization: Bearer {{authToken}}
+
+###
+# Create a role
+POST {{baseUrl}}/roles
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{  
+  "name": "Customer4",
+  "description": "Full system access",
+  "active": true
+}
+
+###
+# Get role by id
+GET {{baseUrl}}/roles/10
+Authorization: Bearer {{authToken}}
+
+###
+# Update role (replace 1)
+PUT {{baseUrl}}/roles/9
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Customer14",
+  "description": "Updated description",
+  "active": true
+}
+
+###
+# Delete role (replace 1)
+DELETE {{baseUrl}}/roles/9
+Authorization: Bearer {{authToken}}

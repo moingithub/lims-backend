@@ -1,0 +1,39 @@
+### List companies
+GET {{baseUrl}}/companies
+Authorization: Bearer {{authToken}}
+
+### Create company
+POST {{baseUrl}}/companies
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "code": "COMP-001",
+  "name": "Acme Corp",
+  "phone": "+1-555-1234",
+  "email": "info@acme.example",
+  "billing_ref": "ACME-BILL",
+  "billing_ref_no": "BR-1001",
+  "billing_address": "123 Industrial Ave, Metropolis",
+  "active": true
+}
+
+### Get company by id
+GET {{baseUrl}}/companies/2
+Authorization: Bearer {{authToken}}
+
+### Update company
+PUT {{baseUrl}}/companies/2
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Acme Corporation",
+  "phone": "+1-555-9876",
+  "billing_address": "456 Commerce St, Metropolis",
+  "active": true
+}
+
+### Delete company
+DELETE {{baseUrl}}/companies/2
+Authorization: Bearer {{authToken}}

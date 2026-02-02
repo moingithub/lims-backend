@@ -1,0 +1,16 @@
+{
+  "rest-client.environmentVariables": {
+    "local": {
+      "baseUrl": "http://localhost:4000/api",
+      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc3MDAyMTAyOCwiZXhwIjoxNzcwMDQ5ODI4fQ.wsIrGS3uS4YGSlid0TO6VPSAgjkibFIFeyp3OELC_GY"
+    },
+    "demo": {
+      "baseUrl": "http://14.140.202.214:5000/api",
+      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjQsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc2Nzk0NTUwNCwiZXhwIjoxNzY3OTc0MzA0fQ.PZ79cW5Ouwi8pbqkrt6vutxnG32-pol_DwhjTmjTiOo"
+    },
+    "production": {
+      "baseUrl": "https://yourdomain.com/api",
+      "authToken": ""
+    }
+  }
+}

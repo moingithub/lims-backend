@@ -1,0 +1,68 @@
+### List sample check-ins
+GET {{baseUrl}}/sample_checkin
+Authorization: Bearer {{authToken}}
+
+### Filter by status
+GET {{baseUrl}}/sample_checkin?status=Pending
+Authorization: Bearer {{authToken}}
+
+### List work orders
+GET {{baseUrl}}/sample_checkin/workorders
+Authorization: Bearer {{authToken}}
+
+### List work orders (filter by status)
+GET {{baseUrl}}/sample_checkin/workorders?status=Pending
+Authorization: Bearer {{authToken}}
+
+### Get sample check-in by id
+GET {{baseUrl}}/sample_checkin/4
+Authorization: Bearer {{authToken}}
+
+### Create sample check-in
+POST {{baseUrl}}/sample_checkin
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "company_id": 1,
+  "company_contact_id": 1,
+  "analysis_type_id": 1,
+  "area_id": 1,
+  "customer_cylinder": true,
+  "rushed": false,
+  "sampled_by_lab": false,
+  "cylinder_id": null,
+  "cylinder_number": "CYL-0002",  
+  "analysis_number": "AN-0011",
+  "producer": "Demo Producer",
+  "well_name": "Well-001",
+  "meter_number": "MTR-001",
+  "sample_type": "Composite", 
+  "flow_rate": "10 scfh",
+  "pressure": "100",
+  "pressure_unit": "PSIA",
+  "temperature": "25 C",
+  "field_h2s": "0 ppm",
+  "cost_code": "CC-001",
+  "checkin_type": "Cylinder",
+  "invoice_ref_name": "WO",
+  "invoice_ref_value": "WO-0002",
+  "remarks": "API create",
+  "scanned_tag_image": null,
+  "work_order_number": "WO-0002",
+  "status": "Pending"
+}
+
+### Update sample check-in
+PUT {{baseUrl}}/sample_checkin/4
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "Completed",
+  "remarks": "Updated via API"
+}
+
+### Delete sample check-in
+DELETE {{baseUrl}}/sample_checkin/2
+Authorization: Bearer {{authToken}}

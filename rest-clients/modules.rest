@@ -1,0 +1,33 @@
+### List modules
+GET {{baseUrl}}/modules
+Authorization: Bearer {{authToken}}
+
+### Create module
+POST {{baseUrl}}/modules
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Check-In12",
+  "description": "Module for Check In",
+  "active": true
+}
+
+### Get module by id
+GET {{baseUrl}}/modules/1
+Authorization: Bearer {{authToken}}
+
+### Update module
+PUT {{baseUrl}}/modules/20
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "module_name": "Inventory Updated",
+  "description": "Updated description",
+  "active": false
+}
+
+### Delete module
+DELETE {{baseUrl}}/modules/20
+Authorization: Bearer {{authToken}}

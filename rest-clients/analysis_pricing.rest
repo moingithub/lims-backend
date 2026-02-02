@@ -1,0 +1,38 @@
+### List analysis pricing
+GET {{baseUrl}}/analysis_pricing
+Authorization: Bearer {{authToken}}
+
+### Create analysis pricing
+POST {{baseUrl}}/analysis_pricing
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "analysis_type": "Gar Purity",
+  "description": "Standard Gas Purity analysis",
+  "standard_rate": "100.00",
+  "rushed_rate": "150.00",
+  "sample_fee": "25.00",
+  "active": true
+}
+
+### Get analysis pricing by id
+GET {{baseUrl}}/analysis_pricing/1
+Authorization: Bearer {{authToken}}
+
+### Update analysis pricing
+PUT {{baseUrl}}/analysis_pricing/2
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "description": "Updated description",
+  "standard_rate": "110.00",
+  "rushed_rate": "160.00",
+  "sample_fee": "30.00",
+  "active": true
+}
+
+### Delete analysis pricing
+DELETE {{baseUrl}}/analysis_pricing/1
+Authorization: Bearer {{authToken}}

@@ -1,0 +1,35 @@
+### List company contacts
+GET {{baseUrl}}/company_contacts
+Authorization: Bearer {{authToken}}
+
+### Create company contact
+POST {{baseUrl}}/company_contacts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "company_id": 1,
+  "name": "Moin Ansari2",
+  "phone": "+1-555-003041",
+  "email": "john.do1e@example.com",
+  "active": true
+}
+
+### Get company contact by id
+GET {{baseUrl}}/company_contacts/2
+Authorization: Bearer {{authToken}}
+
+### Update company contact
+PUT {{baseUrl}}/company_contacts/2
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "phone": "+1-555-0002",
+  "email": "john.updated@example.com",
+  "active": true
+}
+
+### Delete company contact
+DELETE {{baseUrl}}/company_contacts/2
+Authorization: Bearer {{authToken}}

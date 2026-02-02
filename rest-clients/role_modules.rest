@@ -1,0 +1,32 @@
+### List role_modules
+GET {{baseUrl}}/role_modules
+Authorization: Bearer {{authToken}}
+
+### Get single role_module
+GET {{baseUrl}}/role_modules/1
+Authorization: Bearer {{authToken}}
+
+### Create role_module
+POST {{baseUrl}}/role_modules
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "role_id": 1,
+  "module_id": 1,
+  "active": true,
+  "created_by_id": 1
+}
+
+### Update role_module
+PUT {{baseUrl}}/role_modules/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### Delete role_module
+DELETE {{baseUrl}}/role_modules/1
+Authorization: Bearer {{authToken}}

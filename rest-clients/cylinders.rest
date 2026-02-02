@@ -1,0 +1,35 @@
+### List cylinders
+GET {{baseUrl}}/cylinders
+Authorization: Bearer {{authToken}}
+
+### Create cylinder
+POST {{baseUrl}}/cylinders
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "cylinder_number": "CYL-0002",
+  "cylinder_type": "Gas",
+  "track_inventory": true,
+  "location": "Clean Cylinder",
+  "active": true
+}
+
+### Get cylinder by id
+GET {{baseUrl}}/cylinders/2
+Authorization: Bearer {{authToken}}
+
+### Update cylinder
+PUT {{baseUrl}}/cylinders/5
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "location": "Clean Cylinder",
+  "track_inventory": false,
+  "active": true
+}
+
+### Delete cylinder
+DELETE {{baseUrl}}/cylinders/1
+Authorization: Bearer {{authToken}}

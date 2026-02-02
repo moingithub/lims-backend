@@ -1,0 +1,45 @@
+### List cylinder checkouts
+GET {{baseUrl}}/cylinder_checkout
+Authorization: Bearer {{authToken}}
+
+### List open checkouts
+GET {{baseUrl}}/cylinder_checkout?is_returned=false
+Authorization: Bearer {{authToken}}
+
+### Create checkout
+POST {{baseUrl}}/cylinder_checkout
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "cylinder_id": 2,
+  "company_id": 1,
+  "company_contact_id": 1,
+  "is_returned": false
+}
+
+### Get checkout by id
+GET {{baseUrl}}/cylinder_checkout/2
+Authorization: Bearer {{authToken}}
+
+### Mark checkout as returned
+PUT {{baseUrl}}/cylinder_checkout/2
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "is_returned": true
+}
+
+### Update contact on checkout
+PUT {{baseUrl}}/cylinder_checkout/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "company_contact_id": 1
+}
+
+### Delete checkout
+DELETE {{baseUrl}}/cylinder_checkout/1
+Authorization: Bearer {{authToken}}

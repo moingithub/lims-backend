@@ -1,0 +1,36 @@
+### List company areas
+GET {{baseUrl}}/company_areas
+Authorization: Bearer {{authToken}}
+
+### Create company area
+POST {{baseUrl}}/company_areas
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "company_id": 1,
+  "area": "South-West",
+  "region": "SW",
+  "description": "South region area",
+  "active": true
+}
+
+### Get company area by id
+GET {{baseUrl}}/company_areas/2
+Authorization: Bearer {{authToken}}
+
+### Update company area
+PUT {{baseUrl}}/company_areas/2
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "area": "North-East",
+  "region": "NE",
+  "description": "Updated description",
+  "active": true
+}
+
+### Delete company area
+DELETE {{baseUrl}}/company_areas/1
+Authorization: Bearer {{authToken}}

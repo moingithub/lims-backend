@@ -1,0 +1,23 @@
+1- Delete the folder migrations which is under prisma
+2- Delete the lims database
+3- Create the lims database
+4- Execute script in db from prisma\additional-db-scripts.sql
+
+5. Migrate DB Structure
+npx prisma migrate dev --name init
+
+6. Seed 
+npx prisma db seed
+or
+node prisma/seed.js
+
+--------For API Update----------------
+-- How to upload changes in production
+sudo pm2 list
+-- Assume 0 is the API
+sudo pm2 stop 0
+rm -rf node_modules package-lock.json
+upload changes from fileZilla ( Do not upload node_modules)
+npm install
+sudo pm2 start 0
+
