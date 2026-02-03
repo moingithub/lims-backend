@@ -10,13 +10,23 @@ Content-Type: application/json
   "password": "admin123!"
 }
 
+
 ### Authenticate (login)
 POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "moin@esoftech.com",
-  "password": "securepassword"
+  "email": "admin@lims.com",
+  "password": "admin1233!"
+}
+
+### Authenticate (login)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "moin@example.com",
+  "password": "moin12345"
 }
 
 ### Example: invalid credentials

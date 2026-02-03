@@ -343,6 +343,49 @@ router.post("/:id/change-password", authorize("users"), async (req, res) => {
   }
 });
 
+// RESET PASSWORD (admin only)
+router.post("/:id/reset-password", authorize("users"), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0)
+    return res.status(400).json({ error: "Invalid id" });
+
+  const { new_password } = req.body || {};
+  if (!new_password)
+    return res.status(400).json({ error: "new_password is required" });
+
+  try {
+    const requesterIsAdmin =
+      req.user &&
+      typeof req.user.role === "string" &&
+      String(req.user.role).trim().toLowerCase() === "admin";
+    if (!requesterIsAdmin) return res.status(403).json({ error: "Forbidden" });
+
+    const existing = await prisma.users.findUnique({
+      where: { id },
+      include: { role: true },
+    });
+    if (!existing) return res.status(404).json({ error: "User not found" });
+
+    const targetRoleName =
+      (existing.role && (existing.role.name || existing.role.role)) || null;
+    const isTargetAdmin =
+      !!targetRoleName &&
+      String(targetRoleName).trim().toLowerCase() === "admin";
+    if (isTargetAdmin)
+      return res.status(403).json({
+        error: "Resetting an admin user's password is not allowed",
+      });
+
+    const SALT_ROUNDS = 10;
+    const hashed = await bcrypt.hash(new_password, SALT_ROUNDS);
+
+    await prisma.users.update({ where: { id }, data: { password: hashed } });
+    return res.json({ message: "Password reset" });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
 // DELETE user
 router.delete("/:id", authorize("users"), async (req, res) => {
   const id = Number(req.params.id);

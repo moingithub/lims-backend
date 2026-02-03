@@ -14,6 +14,10 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/sample_checkin/workorders?status=Pending
 Authorization: Bearer {{authToken}}
 
+### Get work order for edit by work order number
+GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-373775
+Authorization: Bearer {{authToken}}
+
 ### Get sample check-in by id
 GET {{baseUrl}}/sample_checkin/4
 Authorization: Bearer {{authToken}}
@@ -64,5 +68,5 @@ Content-Type: application/json
 }
 
 ### Delete sample check-in
-DELETE {{baseUrl}}/sample_checkin/2
+DELETE {{baseUrl}}/sample_checkin/6
 Authorization: Bearer {{authToken}}

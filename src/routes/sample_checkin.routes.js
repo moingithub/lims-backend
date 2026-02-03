@@ -83,7 +83,14 @@ router.get("/workorders", async (req, res) => {
       return Number(v);
     };
 
+    const workOrderCounts = rows.reduce((acc, r) => {
+      const key = r.work_order_number ?? `__no_work_order_${r.id}`;
+      acc.set(key, (acc.get(key) || 0) + 1);
+      return acc;
+    }, new Map());
+
     const list = rows.map((r) => {
+      const workOrderKey = r.work_order_number ?? `__no_work_order_${r.id}`;
       const baseRate = r.rushed
         ? toNumber(r.analysis_pricing?.rushed_rate)
         : toNumber(r.analysis_pricing?.standard_rate);
@@ -110,7 +117,7 @@ router.get("/workorders", async (req, res) => {
         meter_number: r.meter_number ?? null,
         date: r.created_at,
         pending_since: pendingSince,
-        cylinders: r.cylinder_number ?? null,
+        cylinders: workOrderCounts.get(workOrderKey) ?? 0,
         amount,
         status: r.status ?? null,
       };
@@ -119,6 +126,119 @@ router.get("/workorders", async (req, res) => {
     return res.json(list);
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch work orders" });
+  }
+});
+
+// Get work order details for edit by work order number
+router.get("/workorders/by-number/:work_order_number", async (req, res) => {
+  const workOrderNumber = String(req.params.work_order_number || "").trim();
+  if (!workOrderNumber)
+    return res
+      .status(400)
+      .json({ error: "work_order_number is required" });
+  try {
+    const workOrderSample = await prisma.sample_checkin.findFirst({
+      where: isCustomerWithCompany(req)
+        ? {
+            work_order_number: workOrderNumber,
+            company_id: Number(req.user.company_id),
+          }
+        : { work_order_number: workOrderNumber },
+      orderBy: { created_at: "asc" },
+      select: {
+        id: true,
+        work_order_number: true,
+        well_name: true,
+        meter_number: true,
+        created_at: true,
+        status: true,
+        company_id: true,
+        company: { select: { name: true } },
+      },
+    });
+
+    if (!workOrderSample)
+      return res.status(404).json({ error: "Work order not found" });
+
+    const where = isCustomerWithCompany(req)
+      ? {
+          work_order_number: workOrderSample.work_order_number,
+          company_id: Number(req.user.company_id),
+        }
+      : { work_order_number: workOrderSample.work_order_number };
+
+    const items = await prisma.sample_checkin.findMany({
+      where,
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        cylinder_number: true,
+        analysis_number: true,
+        cost_code: true,
+        rushed: true,
+        well_name: true,
+        meter_number: true,
+        analysis_pricing: {
+          select: {
+            analysis_type: true,
+            standard_rate: true,
+            rushed_rate: true,
+            sample_fee: true,
+          },
+        },
+      },
+    });
+
+    const toNumber = (v) => {
+      if (v == null) return 0;
+      if (typeof v === "object" && typeof v.toNumber === "function")
+        return v.toNumber();
+      return Number(v);
+    };
+
+    const line_items = items.map((item) => {
+      const standardRate = toNumber(item.analysis_pricing?.standard_rate);
+      const rushedRate = toNumber(item.analysis_pricing?.rushed_rate);
+      const rate = item.rushed ? rushedRate : standardRate;
+      const sampleFee = toNumber(item.analysis_pricing?.sample_fee);
+      const h2PopFee = 0;
+      const spotCompositeFee = 0;
+      const amount = rate + sampleFee + h2PopFee + spotCompositeFee;
+
+      return {
+        id: item.id,
+        cylinder_number: item.cylinder_number ?? null,
+        analysis_number: item.analysis_number ?? null,
+        cc_number: item.cost_code ?? null,
+        analysis_type: item.analysis_pricing?.analysis_type ?? null,
+        rushed: Boolean(item.rushed ?? false),
+        well_name: item.well_name ?? null,
+        meter_number: item.meter_number ?? null,
+        rate,
+        standard_rate: standardRate,
+        sample_fee: sampleFee,
+        h2_pop_fee: h2PopFee,
+        spot_composite_fee: spotCompositeFee,
+        amount,
+      };
+    });
+
+    const work_order = {
+      id: workOrderSample.id,
+      work_order_number: workOrderSample.work_order_number ?? null,
+      company: workOrderSample.company?.name ?? null,
+      well_name: workOrderSample.well_name ?? null,
+      meter_number: workOrderSample.meter_number ?? null,
+      date: workOrderSample.created_at,
+      status: workOrderSample.status ?? null,
+      mileage_fee: 0,
+      miscellaneous_charges: 0,
+      hourly_fee: 0,
+    };
+
+    return res.json({ work_order, line_items });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to fetch work order" });
   }
 });
 

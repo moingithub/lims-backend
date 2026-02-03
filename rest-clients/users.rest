@@ -1,4 +1,3 @@
-
 # `authToken` is available is available .vscode\settings.json. You need to update it after login
 ### Check root
 GET {{baseUrl}}/
@@ -37,7 +36,7 @@ Content-Type: application/json
 {
   "name": "Moin Ansari",
   "email": "moin@example.com",
-  "role_id": 1,
+  "role_id": 2,
   "company_id": 1,
   "status": true
 }
@@ -46,3 +45,24 @@ Content-Type: application/json
 # Delete user (replace 2 with real id)
 DELETE {{baseUrl}}/users/5
 Authorization: Bearer {{authToken}}
+
+###
+# Reset user password (admin only, replace 2 with real id)
+POST {{baseUrl}}/users/2/reset-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "new_password": "TempPass@123"
+}
+
+###
+# Change own password (self-service, replace 2 with your id)
+POST {{baseUrl}}/users/1/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "current_password": "admin1234!",
+  "new_password": "admin123!"
+}
