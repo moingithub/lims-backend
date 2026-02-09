@@ -166,7 +166,7 @@ CREATE TABLE "sample_checkin" (
     "sample_type" TEXT NOT NULL,
     "flow_rate" TEXT,
     "pressure" TEXT,
-    "pressure_unit" TEXT,
+    "pressure_unit" TEXT NOT NULL,
     "temperature" TEXT,
     "field_h2s" TEXT,
     "cost_code" TEXT,
@@ -177,11 +177,29 @@ CREATE TABLE "sample_checkin" (
     "scanned_tag_image" TEXT,
     "work_order_number" TEXT,
     "status" TEXT NOT NULL,
+    "standard_rate" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "sample_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "h2_pop_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "spot_composite_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "created_by_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "sample_checkin_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "workorder_headers" (
+    "id" SERIAL NOT NULL,
+    "work_order_number" TEXT NOT NULL,
+    "mileage_fee" DECIMAL(12,2) NOT NULL,
+    "miscellaneous_charges" DECIMAL(12,2) NOT NULL,
+    "hourly_fee" DECIMAL(12,2) NOT NULL,
+    "created_by_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "workorder_headers_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -225,6 +243,9 @@ CREATE INDEX "sample_checkin_company_id_idx" ON "sample_checkin"("company_id");
 
 -- CreateIndex
 CREATE INDEX "sample_checkin_status_idx" ON "sample_checkin"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "workorder_headers_work_order_number_key" ON "workorder_headers"("work_order_number");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -288,3 +309,6 @@ ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_cylinder_id_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

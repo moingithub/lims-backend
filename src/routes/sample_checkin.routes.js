@@ -1,3 +1,4 @@
+// Duplicate require removed: express is already declared above
 const express = require("express");
 const {
   prisma,
@@ -8,6 +9,49 @@ const {
 const authorize = require("../middleware/authorize");
 
 const router = express.Router();
+
+// Update work order lines fields in sample_checkin
+router.put("/update_wo_lines/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0)
+    return res.status(400).json({ error: "Invalid id" });
+  try {
+    const existing = await prisma.sample_checkin.findUnique({ where: { id } });
+    if (!existing)
+      return res.status(404).json({ error: "Sample check-in not found" });
+
+    const {
+      analysis_type_id,
+      rushed,
+      standard_rate,
+      sample_fee,
+      h2_pop_fee,
+      spot_composite_fee,
+    } = req.body;
+
+    const updates = {};
+    if (analysis_type_id !== undefined)
+      updates.analysis_type_id = Number(analysis_type_id);
+    if (rushed !== undefined) updates.rushed = Boolean(rushed);
+    if (standard_rate !== undefined)
+      updates.standard_rate = Number(standard_rate);
+    if (sample_fee !== undefined) updates.sample_fee = Number(sample_fee);
+    if (h2_pop_fee !== undefined) updates.h2_pop_fee = Number(h2_pop_fee);
+    if (spot_composite_fee !== undefined)
+      updates.spot_composite_fee = Number(spot_composite_fee);
+
+    const updated = await prisma.sample_checkin.update({
+      where: { id },
+      data: updates,
+    });
+    return res.json({ message: "Update successful", updated });
+  } catch (err) {
+    return res.status(500).json({
+      error: "Failed to update work order lines",
+      detail: err.message,
+    });
+  }
+});
 
 function isCustomerWithCompany(req) {
   return (
@@ -86,6 +130,7 @@ router.get("/workorders", async (req, res) => {
     const workOrderCounts = rows.reduce((acc, r) => {
       const key = r.work_order_number ?? `__no_work_order_${r.id}`;
       acc.set(key, (acc.get(key) || 0) + 1);
+      // PUT endpoint to update specific fields in sample_checkin
       return acc;
     }, new Map());
 
@@ -133,9 +178,7 @@ router.get("/workorders", async (req, res) => {
 router.get("/workorders/by-number/:work_order_number", async (req, res) => {
   const workOrderNumber = String(req.params.work_order_number || "").trim();
   if (!workOrderNumber)
-    return res
-      .status(400)
-      .json({ error: "work_order_number is required" });
+    return res.status(400).json({ error: "work_order_number is required" });
   try {
     const workOrderSample = await prisma.sample_checkin.findFirst({
       where: isCustomerWithCompany(req)
@@ -178,14 +221,12 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         rushed: true,
         well_name: true,
         meter_number: true,
-        analysis_pricing: {
-          select: {
-            analysis_type: true,
-            standard_rate: true,
-            rushed_rate: true,
-            sample_fee: true,
-          },
-        },
+        standard_rate: true,
+        sample_fee: true,
+        h2_pop_fee: true,
+        spot_composite_fee: true,
+        analysis_type_id: true,
+        analysis_pricing: { select: { analysis_type: true } },
       },
     });
 
@@ -197,48 +238,60 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
     };
 
     const line_items = items.map((item) => {
-      const standardRate = toNumber(item.analysis_pricing?.standard_rate);
-      const rushedRate = toNumber(item.analysis_pricing?.rushed_rate);
-      const rate = item.rushed ? rushedRate : standardRate;
-      const sampleFee = toNumber(item.analysis_pricing?.sample_fee);
-      const h2PopFee = 0;
-      const spotCompositeFee = 0;
-      const amount = rate + sampleFee + h2PopFee + spotCompositeFee;
-
+      const rate = toNumber(item.standard_rate); // Use standard_rate as rate
       return {
         id: item.id,
         cylinder_number: item.cylinder_number ?? null,
         analysis_number: item.analysis_number ?? null,
         cc_number: item.cost_code ?? null,
-        analysis_type: item.analysis_pricing?.analysis_type ?? null,
         rushed: Boolean(item.rushed ?? false),
         well_name: item.well_name ?? null,
         meter_number: item.meter_number ?? null,
-        rate,
-        standard_rate: standardRate,
-        sample_fee: sampleFee,
-        h2_pop_fee: h2PopFee,
-        spot_composite_fee: spotCompositeFee,
-        amount,
+        analysis_type_id: item.analysis_type_id ?? null,
+        analysis_type: item.analysis_pricing?.analysis_type ?? null,
+        rate: rate,
+        standard_rate: toNumber(item.standard_rate),
+        sample_fee: toNumber(item.sample_fee),
+        h2_pop_fee: toNumber(item.h2_pop_fee),
+        spot_composite_fee: toNumber(item.spot_composite_fee),
+        amount:
+          rate +
+          toNumber(item.sample_fee) +
+          toNumber(item.h2_pop_fee) +
+          toNumber(item.spot_composite_fee),
       };
     });
+
+    // Fetch workorder_headers for this work_order_number
+    let wh = null;
+    if (workOrderSample.work_order_number) {
+      wh = await prisma.workorder_headers.findUnique({
+        where: { work_order_number: workOrderSample.work_order_number },
+        select: {
+          mileage_fee: true,
+          miscellaneous_charges: true,
+          hourly_fee: true,
+        },
+      });
+    }
 
     const work_order = {
       id: workOrderSample.id,
       work_order_number: workOrderSample.work_order_number ?? null,
       company: workOrderSample.company?.name ?? null,
-      well_name: workOrderSample.well_name ?? null,
-      meter_number: workOrderSample.meter_number ?? null,
       date: workOrderSample.created_at,
       status: workOrderSample.status ?? null,
-      mileage_fee: 0,
-      miscellaneous_charges: 0,
-      hourly_fee: 0,
+      mileage_fee: wh?.mileage_fee ?? 0,
+      miscellaneous_charges: wh?.miscellaneous_charges ?? 0,
+      hourly_fee: wh?.hourly_fee ?? 0,
     };
 
     return res.json({ work_order, line_items });
   } catch (err) {
-    return res.status(500).json({ error: "Failed to fetch work order" });
+    console.error("Error in /workorders/by-number/:work_order_number:", err);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch work order", detail: err.message });
   }
 });
 

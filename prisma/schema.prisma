@@ -32,6 +32,7 @@ model users {
   analysisPricings analysis_pricing[]
   cylinderCheckouts cylinder_checkout[]
   sampleCheckins sample_checkin[]
+  workorders_created workorder_headers[]
 }
 
 model companies {
@@ -213,7 +214,7 @@ model sample_checkin {
   sample_type        String
   flow_rate          String?
   pressure           String?
-  pressure_unit      String?
+  pressure_unit      String
   temperature        String?
   field_h2s          String?
   cost_code          String?
@@ -224,6 +225,11 @@ model sample_checkin {
   scanned_tag_image  String?
   work_order_number  String?
   status             String
+  // Price fields update from edit workorder screen
+  standard_rate      Decimal   @default(0)       @db.Decimal(12, 2)          
+  sample_fee         Decimal   @default(0)       @db.Decimal(12, 2)
+  h2_pop_fee         Decimal   @default(0)       @db.Decimal(12, 2)
+  spot_composite_fee Decimal   @default(0)       @db.Decimal(12, 2)
   // Common fields
   created_by_id      Int
   created_by         users            @relation( fields: [created_by_id], references: [id], onDelete: Restrict)
@@ -232,4 +238,18 @@ model sample_checkin {
   // Constraints
   @@index([company_id])
   @@index([status])
+}
+
+
+model workorder_headers {
+  id                      Int             @id @default(autoincrement())
+  work_order_number       String          @unique
+  mileage_fee              Decimal         @db.Decimal(12, 2)
+  miscellaneous_charges    Decimal         @db.Decimal(12, 2)
+  hourly_fee               Decimal         @db.Decimal(12, 2)  
+  // Common fields
+  created_by_id           Int
+  created_by              users           @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
+  created_at              DateTime        @default(now())
+  updated_at              DateTime        @updatedAt    
 }

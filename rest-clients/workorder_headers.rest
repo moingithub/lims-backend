@@ -1,0 +1,44 @@
+### Get workorder_header by work_order_number
+GET {{baseUrl}}/workorder_headers/by-number/WO-915641
+Authorization: Bearer {{authToken}}
+### List all workorder_headers
+GET {{baseUrl}}/workorder_headers
+Authorization: Bearer {{authToken}}
+
+### Get workorder_header by id
+GET {{baseUrl}}/workorder_headers/1
+Authorization: Bearer {{authToken}}
+
+### Create workorder_header
+POST {{baseUrl}}/workorder_headers
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "work_order_number": "WO-915641",
+  "mileage_fee": 10.00,
+  "miscellaneous_charges": 5.00,
+  "hourly_fee": 20.00,
+  "created_by_id": 1
+}
+
+### Update workorder_header by work_order_number
+PUT {{baseUrl}}/workorder_headers/by-number/WO-915641
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "mileage_fee": 124.00,
+  "miscellaneous_charges": 644.00,
+  "hourly_fee": 242.00,
+  "created_by_id": 1
+}
+
+
+### Delete workorder_header by work_order_number
+DELETE {{baseUrl}}/workorder_headers/by-number/WO-0001
+Authorization: Bearer {{authToken}}
+
+### Delete workorder_header by id
+DELETE {{baseUrl}}/workorder_headers/1
+Authorization: Bearer {{authToken}}

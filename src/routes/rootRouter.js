@@ -9,6 +9,7 @@ const companyAreasRouter = require("./company_areas.routes");
 const companyContactsRouter = require("./company_contacts.routes");
 const cylindersRouter = require("./cylinders.routes");
 const analysisPricingRouter = require("./analysis_pricing.routes");
+const workorderHeadersRouter = require("./workorder_headers.routes");
 const cylinderCheckoutRouter = require("./cylinder_checkout.routes");
 const sampleCheckinRouter = require("./sample_checkin.routes");
 const authRouter = require("./auth.routes");
@@ -30,38 +31,44 @@ router.use(
   "/role_modules",
   jwtAuth,
   authorize("role_modules"),
-  roleModulesRouter
+  roleModulesRouter,
 );
 router.use(
   "/company_areas",
   jwtAuth,
   authorize("company_areas"),
-  companyAreasRouter
+  companyAreasRouter,
 );
 router.use(
   "/company_contacts",
   jwtAuth,
   authorize("company_contacts"),
-  companyContactsRouter
+  companyContactsRouter,
 );
 router.use("/cylinders", jwtAuth, authorize("cylinders"), cylindersRouter);
 router.use(
   "/analysis_pricing",
   jwtAuth,
   authorize("analysis_pricing"),
-  analysisPricingRouter
+  analysisPricingRouter,
 );
 router.use(
   "/cylinder_checkout",
   jwtAuth,
   authorize("cylinder_checkout"),
-  cylinderCheckoutRouter
+  cylinderCheckoutRouter,
 );
 router.use(
   "/sample_checkin",
   jwtAuth,
   authorize("sample_checkin"),
-  sampleCheckinRouter
+  sampleCheckinRouter,
+);
+router.use(
+  "/workorder_headers",
+  jwtAuth,
+  authorize("workorder_headers"),
+  workorderHeadersRouter,
 );
 router.use("/auth", authRouter);
 
