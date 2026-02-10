@@ -24,6 +24,7 @@ router.put("/update_wo_lines/:id", async (req, res) => {
       analysis_type_id,
       rushed,
       standard_rate,
+      applied_rate,
       sample_fee,
       h2_pop_fee,
       spot_composite_fee,
@@ -35,6 +36,7 @@ router.put("/update_wo_lines/:id", async (req, res) => {
     if (rushed !== undefined) updates.rushed = Boolean(rushed);
     if (standard_rate !== undefined)
       updates.standard_rate = Number(standard_rate);
+    if (applied_rate !== undefined) updates.applied_rate = Number(applied_rate);
     if (sample_fee !== undefined) updates.sample_fee = Number(sample_fee);
     if (h2_pop_fee !== undefined) updates.h2_pop_fee = Number(h2_pop_fee);
     if (spot_composite_fee !== undefined)
@@ -222,6 +224,7 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         well_name: true,
         meter_number: true,
         standard_rate: true,
+        applied_rate: true,
         sample_fee: true,
         h2_pop_fee: true,
         spot_composite_fee: true,
@@ -251,6 +254,7 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         analysis_type: item.analysis_pricing?.analysis_type ?? null,
         rate: rate,
         standard_rate: toNumber(item.standard_rate),
+        applied_rate: toNumber(item.applied_rate),
         sample_fee: toNumber(item.sample_fee),
         h2_pop_fee: toNumber(item.h2_pop_fee),
         spot_composite_fee: toNumber(item.spot_composite_fee),

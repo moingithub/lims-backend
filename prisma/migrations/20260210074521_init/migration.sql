@@ -178,6 +178,7 @@ CREATE TABLE "sample_checkin" (
     "work_order_number" TEXT,
     "status" TEXT NOT NULL,
     "standard_rate" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "applied_rate" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "sample_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "h2_pop_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "spot_composite_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,

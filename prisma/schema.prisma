@@ -226,7 +226,8 @@ model sample_checkin {
   work_order_number  String?
   status             String
   // Price fields update from edit workorder screen
-  standard_rate      Decimal   @default(0)       @db.Decimal(12, 2)          
+  standard_rate      Decimal   @default(0)       @db.Decimal(12, 2)     
+  applied_rate       Decimal   @default(0)       @db.Decimal(12, 2)            
   sample_fee         Decimal   @default(0)       @db.Decimal(12, 2)
   h2_pop_fee         Decimal   @default(0)       @db.Decimal(12, 2)
   spot_composite_fee Decimal   @default(0)       @db.Decimal(12, 2)

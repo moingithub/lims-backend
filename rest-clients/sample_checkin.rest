@@ -72,14 +72,15 @@ DELETE {{baseUrl}}/sample_checkin/6
 Authorization: Bearer {{authToken}}
 
 ### Update sample_checkin work order lines
-PUT {{baseUrl}}/sample_checkin/update_wo_lines/3
+PUT {{baseUrl}}/sample_checkin/update_wo_lines/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "analysis_type_id": 2,
+  "analysis_type_id": 1,
   "rushed": true,
   "standard_rate": 450.00,
+  "applied_rate": 400.00,
   "sample_fee": 520.00,
   "h2_pop_fee": 220.00,
   "spot_composite_fee": 430.00
