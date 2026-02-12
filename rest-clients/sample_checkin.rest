@@ -15,7 +15,7 @@ GET {{baseUrl}}/sample_checkin/workorders?status=Pending
 Authorization: Bearer {{authToken}}
 
 ### Get work order for edit by work order number
-GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-915641
+GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-929226
 Authorization: Bearer {{authToken}}
 
 ### Get sample check-in by id
@@ -84,4 +84,13 @@ Content-Type: application/json
   "sample_fee": 520.00,
   "h2_pop_fee": 220.00,
   "spot_composite_fee": 430.00
+}
+
+### Update status by work order number (URL param)
+PUT {{baseUrl}}/sample_checkin/update_status_by_wo/WO-390718
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "Pending"
 }

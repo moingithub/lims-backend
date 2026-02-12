@@ -196,6 +196,7 @@ CREATE TABLE "workorder_headers" (
     "mileage_fee" DECIMAL(12,2) NOT NULL,
     "miscellaneous_charges" DECIMAL(12,2) NOT NULL,
     "hourly_fee" DECIMAL(12,2) NOT NULL,
+    "status" TEXT NOT NULL,
     "created_by_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,

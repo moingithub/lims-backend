@@ -14,6 +14,7 @@ router.put("/by-number/:work_order_number", async (req, res) => {
       miscellaneous_charges,
       hourly_fee,
       created_by_id,
+      status,
       work_order_number: new_work_order_number,
     } = req.body;
 
@@ -41,6 +42,7 @@ router.put("/by-number/:work_order_number", async (req, res) => {
         miscellaneous_charges,
         hourly_fee,
         created_by_id,
+        status,
       },
     });
     res.json(updated);
@@ -77,6 +79,7 @@ router.put("/by-number/:work_order_number", async (req, res) => {
       miscellaneous_charges,
       hourly_fee,
       created_by_id,
+      status,
       work_order_number: new_work_order_number,
     } = req.body;
 
@@ -104,6 +107,7 @@ router.put("/by-number/:work_order_number", async (req, res) => {
         miscellaneous_charges,
         hourly_fee,
         created_by_id,
+        status,
       },
     });
     res.json(updated);
@@ -177,6 +181,7 @@ router.post("/", async (req, res) => {
       miscellaneous_charges,
       hourly_fee,
       created_by_id,
+      status,
     } = req.body;
 
     // Validate work_order_number exists in sample_checkin
@@ -197,6 +202,7 @@ router.post("/", async (req, res) => {
         miscellaneous_charges,
         hourly_fee,
         created_by_id,
+        status,
       },
     });
     res.status(201).json(created);
@@ -230,6 +236,7 @@ router.put("/:id", async (req, res) => {
       miscellaneous_charges,
       hourly_fee,
       created_by_id,
+      status,
     } = req.body;
 
     // Validate work_order_number exists in sample_checkin
@@ -253,6 +260,7 @@ router.put("/:id", async (req, res) => {
         miscellaneous_charges,
         hourly_fee,
         created_by_id,
+        status,
       },
     });
     res.json(updated);

@@ -831,3 +831,26 @@ router.delete("/:id", authorize("sample_checkin"), async (req, res) => {
 });
 
 module.exports = router;
+
+// Update status by work_order_number
+
+// Update status by work_order_number via URL param
+router.put("/update_status_by_wo/:work_order_number", async (req, res) => {
+  const work_order_number = String(req.params.work_order_number || '').trim();
+  const { status } = req.body;
+  if (!work_order_number || !status) {
+    return res.status(400).json({ error: "work_order_number (URL) and status (body) are required." });
+  }
+  try {
+    const updated = await prisma.sample_checkin.updateMany({
+      where: { work_order_number },
+      data: { status },
+    });
+    if (updated.count === 0) {
+      return res.status(404).json({ error: "No record found for the given work_order_number." });
+    }
+    res.json({ message: "Status updated successfully.", count: updated.count });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update status.", details: error.message });
+  }
+});
