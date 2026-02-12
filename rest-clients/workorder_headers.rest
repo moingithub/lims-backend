@@ -15,7 +15,9 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "work_order_number": "WO-0001",
+  "company_id": 1,
+  "work_order_date": "2026-01-01T00:00:00.000Z",
+  "work_order_number": "WO-326482",
   "mileage_fee": 10.00,
   "miscellaneous_charges": 5.00,
   "hourly_fee": 20.00,
@@ -24,7 +26,7 @@ Content-Type: application/json
 }
 
 ### Update workorder_header by work_order_number
-PUT {{baseUrl}}/workorder_headers/by-number/WO-0001
+PUT {{baseUrl}}/workorder_headers/by-number/WO-326482
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

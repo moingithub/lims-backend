@@ -10,12 +10,17 @@ router.put("/by-number/:work_order_number", async (req, res) => {
     return res.status(400).json({ error: "work_order_number is required" });
   try {
     const {
+      company_id,
+      work_order_date,
+      work_order_number: new_work_order_number,
+      cylinders,
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
-      created_by_id,
       status,
-      work_order_number: new_work_order_number,
+      created_by_id,
+      created_at,
+      updated_at,
     } = req.body;
 
     // Validate new work_order_number exists in sample_checkin if updating
@@ -37,12 +42,17 @@ router.put("/by-number/:work_order_number", async (req, res) => {
     const updated = await prisma.workorder_headers.update({
       where: { work_order_number },
       data: {
+        company_id,
+        work_order_date,
         work_order_number: new_work_order_number ?? work_order_number,
+        cylinders,
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
-        created_by_id,
         status,
+        created_by_id,
+        created_at,
+        updated_at,
       },
     });
     res.json(updated);
@@ -75,12 +85,17 @@ router.put("/by-number/:work_order_number", async (req, res) => {
     return res.status(400).json({ error: "work_order_number is required" });
   try {
     const {
+      company_id,
+      work_order_date,
+      work_order_number: new_work_order_number,
+      cylinders,
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
-      created_by_id,
       status,
-      work_order_number: new_work_order_number,
+      created_by_id,
+      created_at,
+      updated_at,
     } = req.body;
 
     // Validate new work_order_number exists in sample_checkin if updating
@@ -102,12 +117,17 @@ router.put("/by-number/:work_order_number", async (req, res) => {
     const updated = await prisma.workorder_headers.update({
       where: { work_order_number },
       data: {
+        company_id,
+        work_order_date,
         work_order_number: new_work_order_number ?? work_order_number,
+        cylinders,
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
-        created_by_id,
         status,
+        created_by_id,
+        created_at,
+        updated_at,
       },
     });
     res.json(updated);
@@ -176,12 +196,17 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const {
+      company_id,
+      work_order_date,
       work_order_number,
+      cylinders,
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
-      created_by_id,
       status,
+      created_by_id,
+      created_at,
+      updated_at,
     } = req.body;
 
     // Validate work_order_number exists in sample_checkin
@@ -197,12 +222,17 @@ router.post("/", async (req, res) => {
 
     const created = await prisma.workorder_headers.create({
       data: {
+        company_id,
+        work_order_date,
         work_order_number,
+        cylinders,
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
-        created_by_id,
         status,
+        created_by_id,
+        created_at,
+        updated_at,
       },
     });
     res.status(201).json(created);
@@ -231,12 +261,17 @@ router.put("/:id", async (req, res) => {
     return res.status(400).json({ error: "Invalid id" });
   try {
     const {
+      company_id,
+      work_order_date,
       work_order_number,
+      cylinders,
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
-      created_by_id,
       status,
+      created_by_id,
+      created_at,
+      updated_at,
     } = req.body;
 
     // Validate work_order_number exists in sample_checkin
@@ -255,12 +290,17 @@ router.put("/:id", async (req, res) => {
     const updated = await prisma.workorder_headers.update({
       where: { id },
       data: {
+        company_id,
+        work_order_date,
         work_order_number,
+        cylinders,
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
-        created_by_id,
         status,
+        created_by_id,
+        created_at,
+        updated_at,
       },
     });
     res.json(updated);

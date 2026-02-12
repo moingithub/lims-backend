@@ -192,7 +192,10 @@ CREATE TABLE "sample_checkin" (
 -- CreateTable
 CREATE TABLE "workorder_headers" (
     "id" SERIAL NOT NULL,
+    "company_id" INTEGER NOT NULL,
+    "work_order_date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "work_order_number" TEXT NOT NULL,
+    "cylinders" INTEGER NOT NULL DEFAULT 0,
     "mileage_fee" DECIMAL(12,2) NOT NULL,
     "miscellaneous_charges" DECIMAL(12,2) NOT NULL,
     "hourly_fee" DECIMAL(12,2) NOT NULL,
@@ -311,6 +314,9 @@ ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_cylinder_id_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

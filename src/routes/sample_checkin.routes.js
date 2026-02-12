@@ -114,6 +114,7 @@ router.get("/workorders", async (req, res) => {
         status: true,
         cylinder_number: true,
         rushed: true,
+        company_id: true,
         company: { select: { name: true } },
         analysis_pricing: {
           select: { standard_rate: true, rushed_rate: true, sample_fee: true },
@@ -159,6 +160,7 @@ router.get("/workorders", async (req, res) => {
       return {
         id: r.id,
         work_order_number: r.work_order_number ?? null,
+        company_id: r.company_id ?? null,
         company: r.company?.name ?? null,
         well_name: r.well_name ?? null,
         meter_number: r.meter_number ?? null,
@@ -282,6 +284,7 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
     const work_order = {
       id: workOrderSample.id,
       work_order_number: workOrderSample.work_order_number ?? null,
+      company_id: workOrderSample.company_id ?? null,
       company: workOrderSample.company?.name ?? null,
       date: workOrderSample.created_at,
       status: workOrderSample.status ?? null,
@@ -836,10 +839,14 @@ module.exports = router;
 
 // Update status by work_order_number via URL param
 router.put("/update_status_by_wo/:work_order_number", async (req, res) => {
-  const work_order_number = String(req.params.work_order_number || '').trim();
+  const work_order_number = String(req.params.work_order_number || "").trim();
   const { status } = req.body;
   if (!work_order_number || !status) {
-    return res.status(400).json({ error: "work_order_number (URL) and status (body) are required." });
+    return res
+      .status(400)
+      .json({
+        error: "work_order_number (URL) and status (body) are required.",
+      });
   }
   try {
     const updated = await prisma.sample_checkin.updateMany({
@@ -847,10 +854,14 @@ router.put("/update_status_by_wo/:work_order_number", async (req, res) => {
       data: { status },
     });
     if (updated.count === 0) {
-      return res.status(404).json({ error: "No record found for the given work_order_number." });
+      return res
+        .status(404)
+        .json({ error: "No record found for the given work_order_number." });
     }
     res.json({ message: "Status updated successfully.", count: updated.count });
   } catch (error) {
-    res.status(500).json({ error: "Failed to update status.", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Failed to update status.", details: error.message });
   }
 });

@@ -15,7 +15,7 @@ GET {{baseUrl}}/sample_checkin/workorders?status=Pending
 Authorization: Bearer {{authToken}}
 
 ### Get work order for edit by work order number
-GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-929226
+GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-043754
 Authorization: Bearer {{authToken}}
 
 ### Get sample check-in by id

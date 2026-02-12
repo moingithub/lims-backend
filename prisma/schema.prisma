@@ -55,6 +55,7 @@ model companies {
   companyAreas      company_areas[]
   companyContacts   company_contacts[]
   sampleCheckins    sample_checkin[]
+  workorder_headers workorder_headers[]
 }
 
 model roles {
@@ -243,15 +244,19 @@ model sample_checkin {
 
 
 model workorder_headers {
-  id                      Int             @id @default(autoincrement())
-  work_order_number       String          @unique
-  mileage_fee              Decimal         @db.Decimal(12, 2)
-  miscellaneous_charges    Decimal         @db.Decimal(12, 2)
-  hourly_fee               Decimal         @db.Decimal(12, 2) 
-  status             String
+  id                        Int             @id @default(autoincrement())
+  company_id                Int
+  company                   companies       @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  work_order_date           DateTime        @default(now())
+  work_order_number         String          @unique  
+  cylinders                 Int             @default(0)
+  mileage_fee               Decimal         @db.Decimal(12, 2)
+  miscellaneous_charges     Decimal         @db.Decimal(12, 2)
+  hourly_fee                Decimal         @db.Decimal(12, 2) 
+  status                    String
   // Common fields
-  created_by_id           Int
-  created_by              users           @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
-  created_at              DateTime        @default(now())
-  updated_at              DateTime        @updatedAt    
+  created_by_id             Int
+  created_by                users           @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
+  created_at                DateTime        @default(now())
+  updated_at                DateTime        @updatedAt    
 }
