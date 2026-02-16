@@ -24,7 +24,6 @@ router.put("/update_wo_lines/:id", async (req, res) => {
       analysis_type_id,
       rushed,
       standard_rate,
-      applied_rate,
       sample_fee,
       h2_pop_fee,
       spot_composite_fee,
@@ -36,7 +35,6 @@ router.put("/update_wo_lines/:id", async (req, res) => {
     if (rushed !== undefined) updates.rushed = Boolean(rushed);
     if (standard_rate !== undefined)
       updates.standard_rate = Number(standard_rate);
-    if (applied_rate !== undefined) updates.applied_rate = Number(applied_rate);
     if (sample_fee !== undefined) updates.sample_fee = Number(sample_fee);
     if (h2_pop_fee !== undefined) updates.h2_pop_fee = Number(h2_pop_fee);
     if (spot_composite_fee !== undefined)
@@ -84,7 +82,12 @@ router.get("/", async (req, res) => {
       where,
       orderBy: { id: "asc" },
     });
-    return res.json(list);
+    // Add company_id to each response object (if not already present)
+    const result = list.map((item) => ({
+      ...item,
+      company_id: item.company_id ?? null,
+    }));
+    return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch sample check-ins" });
   }
@@ -133,7 +136,6 @@ router.get("/workorders", async (req, res) => {
     const workOrderCounts = rows.reduce((acc, r) => {
       const key = r.work_order_number ?? `__no_work_order_${r.id}`;
       acc.set(key, (acc.get(key) || 0) + 1);
-      // PUT endpoint to update specific fields in sample_checkin
       return acc;
     }, new Map());
 
@@ -243,7 +245,7 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
     };
 
     const line_items = items.map((item) => {
-      const rate = toNumber(item.standard_rate); // Use standard_rate as rate
+      const appliedRate = toNumber(item.applied_rate);
       return {
         id: item.id,
         cylinder_number: item.cylinder_number ?? null,
@@ -254,14 +256,13 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         meter_number: item.meter_number ?? null,
         analysis_type_id: item.analysis_type_id ?? null,
         analysis_type: item.analysis_pricing?.analysis_type ?? null,
-        rate: rate,
         standard_rate: toNumber(item.standard_rate),
-        applied_rate: toNumber(item.applied_rate),
+        applied_rate: appliedRate,
         sample_fee: toNumber(item.sample_fee),
         h2_pop_fee: toNumber(item.h2_pop_fee),
         spot_composite_fee: toNumber(item.spot_composite_fee),
         amount:
-          rate +
+          appliedRate +
           toNumber(item.sample_fee) +
           toNumber(item.h2_pop_fee) +
           toNumber(item.spot_composite_fee),
@@ -315,7 +316,8 @@ router.get("/:id", async (req, res) => {
       if (Number(item.company_id) !== Number(req.user.company_id))
         return res.status(403).json({ error: "Forbidden" });
     }
-    return res.json(item);
+    // Add company_id to response (if not already present)
+    return res.json({ ...item, company_id: item.company_id ?? null });
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch sample check-in" });
   }
@@ -484,7 +486,10 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
     const [company, contact, analysis, cylinder] = await Promise.all([
       prisma.companies.findUnique({ where: { id: compId } }),
       prisma.company_contacts.findUnique({ where: { id: contactId } }),
-      prisma.analysis_pricing.findUnique({ where: { id: analysisId } }),
+      prisma.analysis_pricing.findUnique({
+        where: { id: analysisId },
+        select: { standard_rate: true, rushed_rate: true, sample_fee: true },
+      }),
       !isCustomerCylinder && cylId != null
         ? prisma.cylinders.findUnique({ where: { id: cylId } })
         : null,
@@ -510,6 +515,14 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       : String(cylinder.cylinder_number);
     const finalCylinderId = isCustomerCylinder ? null : cylId;
 
+    // Determine applied_rate based on rushed
+    const isRushed = Boolean(rushed ?? false);
+    const isSampledByLab = Boolean(sampled_by_lab ?? false);
+    const standardRate = analysis?.standard_rate ?? null;
+    const rushedRate = analysis?.rushed_rate ?? null;
+    const appliedRate = isRushed ? rushedRate : standardRate;
+    const sampleFee = isSampledByLab ? (analysis?.sample_fee ?? null) : 0;
+
     const created = await prisma.sample_checkin.create({
       data: {
         company: { connect: { id: compId } },
@@ -521,7 +534,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
             : undefined,
         company_area: areaId != null ? { connect: { id: areaId } } : undefined,
         customer_cylinder: isCustomerCylinder,
-        rushed: Boolean(rushed ?? false),
+        rushed: isRushed,
         sampled_by_lab: Boolean(sampled_by_lab ?? false),
         analysis_number: String(analysis_number),
         producer: producer ?? null,
@@ -542,6 +555,9 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         work_order_number: work_order_number ?? null,
         status: String(status),
         cylinder_number: finalCylinderNumber,
+        standard_rate: standardRate,
+        applied_rate: appliedRate,
+        sample_fee: sampleFee,
         created_by: { connect: { id: Number(req.user.userId) } },
       },
     });
@@ -833,20 +849,14 @@ router.delete("/:id", authorize("sample_checkin"), async (req, res) => {
   }
 });
 
-module.exports = router;
-
-// Update status by work_order_number
-
 // Update status by work_order_number via URL param
 router.put("/update_status_by_wo/:work_order_number", async (req, res) => {
   const work_order_number = String(req.params.work_order_number || "").trim();
   const { status } = req.body;
   if (!work_order_number || !status) {
-    return res
-      .status(400)
-      .json({
-        error: "work_order_number (URL) and status (body) are required.",
-      });
+    return res.status(400).json({
+      error: "work_order_number (URL) and status (body) are required.",
+    });
   }
   try {
     const updated = await prisma.sample_checkin.updateMany({
@@ -865,3 +875,5 @@ router.put("/update_status_by_wo/:work_order_number", async (req, res) => {
       .json({ error: "Failed to update status.", details: error.message });
   }
 });
+
+module.exports = router;

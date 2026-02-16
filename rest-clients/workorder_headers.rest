@@ -1,5 +1,5 @@
 ### Get workorder_header by work_order_number
-GET {{baseUrl}}/workorder_headers/by-number/WO-915641
+GET {{baseUrl}}/workorder_headers/by-number/WO-492856
 Authorization: Bearer {{authToken}}
 ### List all workorder_headers
 GET {{baseUrl}}/workorder_headers
@@ -17,7 +17,8 @@ Content-Type: application/json
 {
   "company_id": 1,
   "work_order_date": "2026-01-01T00:00:00.000Z",
-  "work_order_number": "WO-326482",
+  "work_order_number": "WO-492856",
+  "cylinders":2,
   "mileage_fee": 10.00,
   "miscellaneous_charges": 5.00,
   "hourly_fee": 20.00,
@@ -26,7 +27,7 @@ Content-Type: application/json
 }
 
 ### Update workorder_header by work_order_number
-PUT {{baseUrl}}/workorder_headers/by-number/WO-326482
+PUT {{baseUrl}}/workorder_headers/by-number/WO-492856
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -34,12 +35,13 @@ Content-Type: application/json
   "mileage_fee": 124.00,
   "miscellaneous_charges": 644.00,
   "hourly_fee": 242.00,
+  "cylinders":2,
   "created_by_id": 1,
   "status": "Submitted"
 }
 
 ### Just to mark workorer as submitted
-PUT {{baseUrl}}/workorder_headers/by-number/WO-0001
+PUT {{baseUrl}}/workorder_headers/by-number/WO-492856
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

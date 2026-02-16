@@ -15,7 +15,7 @@ GET {{baseUrl}}/sample_checkin/workorders?status=Pending
 Authorization: Bearer {{authToken}}
 
 ### Get work order for edit by work order number
-GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-043754
+GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-492856
 Authorization: Bearer {{authToken}}
 
 ### Get sample check-in by id
@@ -72,7 +72,7 @@ DELETE {{baseUrl}}/sample_checkin/6
 Authorization: Bearer {{authToken}}
 
 ### Update sample_checkin work order lines
-PUT {{baseUrl}}/sample_checkin/update_wo_lines/1
+PUT {{baseUrl}}/sample_checkin/update_wo_lines/16
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -87,7 +87,7 @@ Content-Type: application/json
 }
 
 ### Update status by work order number (URL param)
-PUT {{baseUrl}}/sample_checkin/update_status_by_wo/WO-390718
+PUT {{baseUrl}}/sample_checkin/update_status_by_wo/WO-492856
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
