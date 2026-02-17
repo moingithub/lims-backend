@@ -69,10 +69,8 @@ router.post("/", authorize("companies"), async (req, res) => {
       active,
     } = req.body;
 
-    if (!code || !name || !phone || !email) {
-      return res
-        .status(400)
-        .json({ error: "code, name, phone and email are required" });
+    if (!code || !name) {
+      return res.status(400).json({ error: "code and name are required" });
     }
 
     const created = await prisma.companies.create({

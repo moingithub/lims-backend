@@ -8,13 +8,13 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "code": "COMP-001",
-  "name": "Acme Corp",
-  "phone": "+1-555-1234",
-  "email": "info@acme.example",
-  "billing_ref": "ACME-BILL",
-  "billing_ref_no": "BR-1001",
-  "billing_address": "123 Industrial Ave, Metropolis",
+  "code": "COMP-002",
+  "name": "Acme Corp2",
+  "phone": null,
+  "email": null,
+  "billing_ref": null,
+  "billing_ref_no": null,
+  "billing_address": null,
   "active": true
 }
 

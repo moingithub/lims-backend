@@ -1,5 +1,5 @@
 ### Get workorder_header by work_order_number
-GET {{baseUrl}}/workorder_headers/by-number/WO-492856
+GET {{baseUrl}}/workorder_headers/by-number/WO-584323
 Authorization: Bearer {{authToken}}
 ### List all workorder_headers
 GET {{baseUrl}}/workorder_headers
@@ -56,4 +56,8 @@ Authorization: Bearer {{authToken}}
 
 ### Delete workorder_header by id
 DELETE {{baseUrl}}/workorder_headers/1
+Authorization: Bearer {{authToken}}
+
+### List workorder_headers for invoice
+GET {{baseUrl}}/workorder_headers/for_invoice
 Authorization: Bearer {{authToken}}

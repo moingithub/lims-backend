@@ -12,9 +12,10 @@ CHECK (pressure_unit IN ('PSIG', 'PSIA'));
 ALTER TABLE sample_checkin
 ALTER COLUMN pressure_unit SET NOT NULL;
 
+-- Add new constraint with updated allowed values
 ALTER TABLE sample_checkin
 ADD CONSTRAINT chk_checkin_type
-CHECK (checkin_type IN ('Cylinder', 'Sample'));
+CHECK (checkin_type IN ('Cylinder', 'Bottle', 'CP Cylinder'));
 
 ALTER TABLE sample_checkin
 ALTER COLUMN checkin_type SET NOT NULL;

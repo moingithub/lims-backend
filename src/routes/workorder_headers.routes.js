@@ -168,6 +168,99 @@ router.get("/by-number/:work_order_number", async (req, res) => {
   }
 });
 
+// List workorder_headers for invoice
+router.get("/for_invoice", async (req, res) => {
+  try {
+    // Fetch workorder_headers where status is 'Submitted'
+    const headers = await prisma.workorder_headers.findMany({
+      where: { status: "Submitted" },
+      include: {
+        company: { select: { name: true } },
+      },
+    });
+
+    // For each header, fetch sample_checkin items
+    const result = await Promise.all(
+      headers.map(async (header) => {
+        // Fetch sample_checkin items for this work_order_number
+        const items = await prisma.sample_checkin.findMany({
+          where: { work_order_number: header.work_order_number },
+          select: {
+            id: true,
+            cylinder_number: true,
+            analysis_number: true,
+            meter_number: true,
+            well_name: true,
+            rushed: true,
+            created_by: true,
+            analysis_type_id: true,
+            analysis_pricing: {
+              select: {
+                analysis_type: true,
+                standard_rate: true,
+                rushed_rate: true,
+                sample_fee: true,
+              },
+            },
+          },
+        });
+
+        // Map items to required format
+        const mappedItems = items.map((item) => {
+          // Calculate price
+          const price = item.rushed
+            ? Number(item.analysis_pricing?.rushed_rate || 0)
+            : Number(item.analysis_pricing?.standard_rate || 0);
+          const sampleFee = Number(item.analysis_pricing?.sample_fee || 0);
+          return {
+            id: item.id,
+            cylinder_number: item.cylinder_number,
+            analysis_number: item.analysis_number,
+            analysis_type: item.analysis_pricing?.analysis_type || null,
+            meter_number: item.meter_number,
+            well_name: item.well_name,
+            rushed: Boolean(item.rushed),
+            price: price + sampleFee,
+          };
+        });
+
+        // Calculate total amount
+        const amount = mappedItems.reduce((sum, i) => sum + (i.price || 0), 0);
+
+        // Status logic: if status is 'Pending', return 'Price Verified'
+        let status = header.status;
+        if (status === "Pending") status = "Price Verified";
+
+        return {
+          id: header.id,
+          work_order_number: header.work_order_number,
+          company_id: header.company_id,
+          company_name: header.company?.name || null,
+          date: header.work_order_date
+            ? header.work_order_date.toISOString().split("T")[0]
+            : null,
+          cylinders: header.cylinders,
+          amount,
+          status,
+          mileage_fee: header.mileage_fee,
+          miscellaneous_charges: header.miscellaneous_charges,
+          hourly_fee: header.hourly_fee,
+          billing_reference_type: header.billing_reference_type || null,
+          billing_reference_number: header.billing_reference_number || null,
+          created_by: header.created_by_id,
+          items: mappedItems,
+        };
+      }),
+    );
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch workorder_headers for invoice",
+      detail: err.message,
+    });
+  }
+});
+
 // List all workorder_headers
 router.get("/", async (req, res) => {
   try {

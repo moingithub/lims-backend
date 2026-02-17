@@ -139,40 +139,53 @@ router.get("/workorders", async (req, res) => {
       return acc;
     }, new Map());
 
-    const list = rows.map((r) => {
-      const workOrderKey = r.work_order_number ?? `__no_work_order_${r.id}`;
-      const baseRate = r.rushed
-        ? toNumber(r.analysis_pricing?.rushed_rate)
-        : toNumber(r.analysis_pricing?.standard_rate);
-      const sampleFee = toNumber(r.analysis_pricing?.sample_fee);
-      const amount = baseRate + sampleFee;
-      const isPending =
-        typeof r.status === "string" &&
-        r.status.trim().toLowerCase() === "pending";
-      const pendingSince = isPending
-        ? Math.max(
-            0,
-            Math.floor(
-              (now.getTime() - new Date(r.created_at).getTime()) /
-                (1000 * 60 * 60 * 24),
-            ),
-          )
-        : null;
+    // For each row, if work_order_number exists, check workorder_headers for status
+    const list = await Promise.all(
+      rows.map(async (r) => {
+        const workOrderKey = r.work_order_number ?? `__no_work_order_${r.id}`;
+        const baseRate = r.rushed
+          ? toNumber(r.analysis_pricing?.rushed_rate)
+          : toNumber(r.analysis_pricing?.standard_rate);
+        const sampleFee = toNumber(r.analysis_pricing?.sample_fee);
+        const amount = baseRate + sampleFee;
+        const pendingSince = Math.max(
+          0,
+          Math.floor(
+            (now.getTime() - new Date(r.created_at).getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        );
 
-      return {
-        id: r.id,
-        work_order_number: r.work_order_number ?? null,
-        company_id: r.company_id ?? null,
-        company: r.company?.name ?? null,
-        well_name: r.well_name ?? null,
-        meter_number: r.meter_number ?? null,
-        date: r.created_at,
-        pending_since: pendingSince,
-        cylinders: workOrderCounts.get(workOrderKey) ?? 0,
-        amount,
-        status: r.status ?? null,
-      };
-    });
+        let status = r.status ?? null;
+        if (r.work_order_number) {
+          try {
+            const wh = await prisma.workorder_headers.findUnique({
+              where: { work_order_number: r.work_order_number },
+              select: { status: true },
+            });
+            if (wh && wh.status === "Pending") {
+              status = "Price Verified";
+            }
+          } catch (e) {
+            // ignore error, fallback to original status
+          }
+        }
+
+        return {
+          id: r.id,
+          work_order_number: r.work_order_number ?? null,
+          company_id: r.company_id ?? null,
+          company: r.company?.name ?? null,
+          well_name: r.well_name ?? null,
+          meter_number: r.meter_number ?? null,
+          date: r.created_at,
+          pending_since: pendingSince,
+          cylinders: workOrderCounts.get(workOrderKey) ?? 0,
+          amount,
+          status,
+        };
+      }),
+    );
 
     return res.json(list);
   } catch (err) {

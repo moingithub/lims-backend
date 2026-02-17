@@ -63,11 +63,11 @@ model roles {
   name              String         @unique
   description       String?
   //Common fields
-  active            Boolean    @default(true)   
+  active            Boolean       @default(true)   
   created_by_id     Int?
-  created_by        users?     @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
+  created_by        users?        @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
   //Back relations
   users             users[]        @relation("RoleUsers") // one role → many users
   role_modules      role_modules[]
