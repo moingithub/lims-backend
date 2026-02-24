@@ -2,11 +2,11 @@
   "rest-client.environmentVariables": {
     "local": {
       "baseUrl": "http://localhost:4000/api",
-      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc3MTMzODA2NSwiZXhwIjoxNzcxMzY2ODY1fQ.LczWYilFy7AZgFf-GIh848JeKORSi4b6U9gy3CLpa8I"
+      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc3MTkxNzQ4OSwiZXhwIjoxNzcxOTQ2Mjg5fQ.q4K8a-MS12uAGZvvtWhQrjDRs6YPkfClD9R0tdJUwQo"
     },
     "demo": {
       "baseUrl": "http://14.140.202.214:5000/api",
-      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjQsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc2Nzk0NTUwNCwiZXhwIjoxNzY3OTc0MzA0fQ.PZ79cW5Ouwi8pbqkrt6vutxnG32-pol_DwhjTmjTiOo"
+      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc3MTMzODg1NSwiZXhwIjoxNzcxMzY3NjU1fQ.2Jog2wecYvknXLdE7vp95cG29uriIrVJIU9GdVrZv7E"
     },
     "production": {
       "baseUrl": "https://yourdomain.com/api",

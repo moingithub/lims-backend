@@ -260,3 +260,46 @@ model workorder_headers {
   created_at                DateTime        @default(now())
   updated_at                DateTime        @updatedAt    
 }
+
+// Invoice models
+
+// model invoice_headers {
+//   id                    Int              @id @default(autoincrement())
+//   company               companies        @relation(fields: [companyId], references: [id])
+//   companyId             Int
+//   invoice_number        String           @unique
+//   invoice_date          DateTime    
+//   service_date          String
+//   cost_code             String    
+//   ticket_number         String
+//   category              String
+//   authorized_by         String
+//   description           String
+//   line_amount           Decimal          @db.Decimal(12,2)  
+//   mileage_fee           Decimal          @db.Decimal(12,2)
+//   miscellaneous_fee     Decimal          @db.Decimal(12,2)
+//   hourly_fee            Decimal          @db.Decimal(12,2)
+//   payment_status        String
+//   created_by_id         Int
+//   created_by            users            @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
+//   created_at            DateTime         @default(now())
+//   updated_at            DateTime         @updatedAt    
+//   lineItems             invoice_lines[]
+// }
+
+// model invoice_lines {
+//   id                  Int      @id      @default(autoincrement())
+//   invoice             invoice_headers   @relation(fields: [invoiceId], references: [id])
+//   invoiceId           Int  
+//   sample_checkin      sample_checkin    @relation(fields: [sample_checkin_id], references: [id])
+//   sample_checkin_id   Int
+//   analysis_number     String  
+//   report_number       String?
+//   quantity            Int
+//   unit_price          Decimal           @db.Decimal(12,2)  
+//   amount              Decimal           @db.Decimal(12,2)
+//   created_by_id       Int
+//   created_by          users           @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
+//   created_at          DateTime        @default(now())
+//   updated_at          DateTime        @updatedAt    
+// }

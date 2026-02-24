@@ -1,0 +1,5 @@
+### Get Cylinder Inventory
+
+GET {{baseUrl}}/cylinder-inventory
+Authorization: Bearer {{authToken}}
+Accept: application/json

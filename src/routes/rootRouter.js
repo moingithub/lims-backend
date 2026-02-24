@@ -13,6 +13,7 @@ const workorderHeadersRouter = require("./workorder_headers.routes");
 const cylinderCheckoutRouter = require("./cylinder_checkout.routes");
 const sampleCheckinRouter = require("./sample_checkin.routes");
 const authRouter = require("./auth.routes");
+const cylinderInventoryRouter = require("./cylinder_inventory.routes");
 const jwtAuth = require("../middleware/jwtAuth");
 const authorize = require("../middleware/authorize");
 
@@ -69,6 +70,12 @@ router.use(
   jwtAuth,
   authorize("workorder_headers"),
   workorderHeadersRouter,
+);
+router.use(
+  "/cylinder-inventory",
+  jwtAuth,
+  authorize("cylinders"),
+  cylinderInventoryRouter,
 );
 router.use("/auth", authRouter);
 
