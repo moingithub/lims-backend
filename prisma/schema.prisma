@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -8,137 +9,123 @@ datasource db {
 }
 
 model users {
-  id                Int              @id @default(autoincrement())
-  name              String
-  email             String           @unique
-  password          String  
-  role_id           Int?
-  role              roles?           @relation("RoleUsers", fields: [role_id], references: [id])
-  company_id        Int?
-  company           companies?       @relation("CompanyUsers", fields: [company_id], references: [id])
-  //Common fields
-  active            Boolean          @default(true)
-  created_by_id     Int?    
-  created_at        DateTime         @default(now())
-  updated_at        DateTime         @updatedAt  
-  //Back relation
-  companyAreas company_areas[]
-  roleModules role_modules[]
-  companies companies[]
-  roles roles[]
-  modules modules[]
-  companyContacts company_contacts[]
-  cylinders cylinders[]
-  analysisPricings analysis_pricing[]
-  cylinderCheckouts cylinder_checkout[]
-  sampleCheckins sample_checkin[]
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  email              String              @unique
+  password           String
+  role_id            Int?
+  company_id         Int?
+  active             Boolean             @default(true)
+  created_by_id      Int?
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @updatedAt
+  analysisPricings   analysis_pricing[]
+  companies          companies[]
+  companyAreas       company_areas[]
+  companyContacts    company_contacts[]
+  cylinderCheckouts  cylinder_checkout[]
+  cylinders          cylinders[]
+  modules            modules[]
+  roleModules        role_modules[]
+  roles              roles[]
+  sampleCheckins     sample_checkin[]
+  company            companies?          @relation("CompanyUsers", fields: [company_id], references: [id])
+  role               roles?              @relation("RoleUsers", fields: [role_id], references: [id])
   workorders_created workorder_headers[]
 }
 
 model companies {
-  id                Int                @id @default(autoincrement())
-  code              String             @unique
-  name              String             @unique
+  id                Int                 @id @default(autoincrement())
+  code              String              @unique
+  name              String              @unique
   phone             String?
   email             String?
   billing_ref       String?
   billing_ref_no    String?
   billing_address   String?
-  //Common fields
-  active            Boolean            @default(true)   
+  active            Boolean             @default(true)
   created_by_id     Int?
-  created_by        users?             @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime           @default(now())
-  updated_at        DateTime           @updatedAt
- //Back relation
-  users             users[]            @relation("CompanyUsers")  
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
+  created_by        users?              @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
   companyAreas      company_areas[]
   companyContacts   company_contacts[]
   sampleCheckins    sample_checkin[]
+  users             users[]             @relation("CompanyUsers")
   workorder_headers workorder_headers[]
 }
 
 model roles {
-  id                Int            @id @default(autoincrement())
-  name              String         @unique
-  description       String?
-  //Common fields
-  active            Boolean       @default(true)   
-  created_by_id     Int?
-  created_by        users?        @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime      @default(now())
-  updated_at        DateTime      @updatedAt
-  //Back relations
-  users             users[]        @relation("RoleUsers") // one role → many users
-  role_modules      role_modules[]
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String?
+  active        Boolean        @default(true)
+  created_by_id Int?
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  role_modules  role_modules[]
+  created_by    users?         @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
+  users         users[]        @relation("RoleUsers")
 }
 
 model modules {
-  id                Int            @id @default(autoincrement())
-  name              String         @unique
-  description       String?
-  // Common fields
-  active            Boolean        @default(true)
-  created_by_id     Int
-  created_by        users          @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime       @default(now())
-  updated_at        DateTime       @updatedAt
-  // Back relations
-  role_modules      role_modules[]
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String?
+  active        Boolean        @default(true)
+  created_by_id Int
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  created_by    users          @relation(fields: [created_by_id], references: [id])
+  role_modules  role_modules[]
 }
 
 model role_modules {
-  id                Int      @id @default(autoincrement())
-  role_id           Int
-  role              roles    @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  module_id         Int  
-  module            modules  @relation(fields: [module_id], references: [id], onDelete: Cascade)
-  // Common fields
-  active            Boolean  @default(true)
-  created_by_id     Int 
-  created_by        users            @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-  
-  //Constraints
+  id            Int      @id @default(autoincrement())
+  role_id       Int
+  module_id     Int
+  active        Boolean  @default(true)
+  created_by_id Int
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  created_by    users    @relation(fields: [created_by_id], references: [id])
+  module        modules  @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  role          roles    @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
   @@unique([role_id, module_id])
 }
 
 model company_areas {
-  id                Int              @id @default(autoincrement())
-  company_id        Int
-  company           companies        @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  area              String
-  region            String
-  description       String?
-  //Common fields
-  active            Boolean          @default(true)
-  created_by_id     Int
-  created_by        users            @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime         @default(now())
-  updated_at        DateTime         @updatedAt
-  // Back relations
-  sampleCheckins    sample_checkin[]
-  //Constraints
+  id             Int              @id @default(autoincrement())
+  company_id     Int
+  area           String
+  region         String
+  description    String?
+  active         Boolean          @default(true)
+  created_by_id  Int
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  company        companies        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  created_by     users            @relation(fields: [created_by_id], references: [id])
+  sampleCheckins sample_checkin[]
+
   @@unique([company_id, area])
 }
 
 model company_contacts {
-  id                Int              @id @default(autoincrement())
-  company_id        Int
-  name              String
-  phone             String
-  email             String
-  company           companies        @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  //Common fields
-  active            Boolean          @default(true)
-  created_by_id     Int
-  created_by        users            @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
-  created_at        DateTime         @default(now())
-  updated_at        DateTime         @updatedAt
-  // Back relations
-  sampleCheckins    sample_checkin[]
-  //Constraints
+  id             Int              @id @default(autoincrement())
+  company_id     Int
+  name           String
+  phone          String
+  email          String
+  active         Boolean          @default(true)
+  created_by_id  Int
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  company        companies        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  created_by     users            @relation(fields: [created_by_id], references: [id])
+  sampleCheckins sample_checkin[]
+
   @@unique([company_id, name])
 }
 
@@ -148,13 +135,11 @@ model cylinders {
   cylinder_type   String
   track_inventory Boolean          @default(true)
   location        String
-  // Common fields
   active          Boolean          @default(true)
   created_by_id   Int
-  created_by      users            @relation( fields: [created_by_id], references: [id], onDelete: Restrict)  
   created_at      DateTime         @default(now())
   updated_at      DateTime         @updatedAt
-  // Back relations
+  created_by      users            @relation(fields: [created_by_id], references: [id])
   sampleCheckins  sample_checkin[]
 }
 
@@ -165,13 +150,11 @@ model analysis_pricing {
   standard_rate  Decimal          @db.Decimal(12, 2)
   rushed_rate    Decimal          @db.Decimal(12, 2)
   sample_fee     Decimal          @db.Decimal(12, 2)
-  // Common fields
   active         Boolean          @default(true)
   created_by_id  Int
-  created_by     users            @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
   created_at     DateTime         @default(now())
   updated_at     DateTime         @updatedAt
-  // Back relations
+  created_by     users            @relation(fields: [created_by_id], references: [id])
   sampleCheckins sample_checkin[]
 }
 
@@ -182,31 +165,24 @@ model cylinder_checkout {
   company_contact_id Int
   is_returned        Boolean   @default(false)
   returned_at        DateTime?
-  //Common fields
   created_by_id      Int
-  created_by         users     @relation( fields: [created_by_id], references: [id], onDelete: Restrict)
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
+  created_by         users     @relation(fields: [created_by_id], references: [id])
 
-// Constraints
   @@index([is_returned])
 }
 
 model sample_checkin {
   id                 Int              @id @default(autoincrement())
   company_id         Int
-  company            companies        @relation(fields: [company_id], references: [id], onDelete: Restrict)
   company_contact_id Int
-  company_contact    company_contacts @relation(fields: [company_contact_id], references: [id], onDelete: Restrict)
   analysis_type_id   Int
-  analysis_pricing   analysis_pricing @relation(fields: [analysis_type_id], references: [id], onDelete: Restrict)
   area_id            Int?
-  company_area       company_areas?   @relation(fields: [area_id], references: [id], onDelete: SetNull)
   customer_cylinder  Boolean          @default(false)
   rushed             Boolean          @default(false)
   sampled_by_lab     Boolean          @default(false)
-  cylinder_id        Int?  
-  cylinder           cylinders?        @relation(fields: [cylinder_id], references: [id], onDelete: Restrict)
+  cylinder_id        Int?
   cylinder_number    String?
   analysis_number    String           @unique
   producer           String?
@@ -226,80 +202,49 @@ model sample_checkin {
   scanned_tag_image  String?
   work_order_number  String?
   status             String
-  // Price fields update from edit workorder screen
-  standard_rate      Decimal   @default(0)       @db.Decimal(12, 2)     
-  applied_rate       Decimal   @default(0)       @db.Decimal(12, 2)            
-  sample_fee         Decimal   @default(0)       @db.Decimal(12, 2)
-  h2_pop_fee         Decimal   @default(0)       @db.Decimal(12, 2)
-  spot_composite_fee Decimal   @default(0)       @db.Decimal(12, 2)
-  // Common fields
+  standard_rate      Decimal          @default(0) @db.Decimal(12, 2)
+  applied_rate       Decimal          @default(0) @db.Decimal(12, 2)
+  sample_fee         Decimal          @default(0) @db.Decimal(12, 2)
+  h2_pop_fee         Decimal          @default(0) @db.Decimal(12, 2)
+  spot_composite_fee Decimal          @default(0) @db.Decimal(12, 2)
   created_by_id      Int
-  created_by         users            @relation( fields: [created_by_id], references: [id], onDelete: Restrict)
   created_at         DateTime         @default(now())
   updated_at         DateTime         @updatedAt
-  // Constraints
+  analysis_pricing   analysis_pricing @relation(fields: [analysis_type_id], references: [id])
+  company_area       company_areas?   @relation(fields: [area_id], references: [id])
+  company_contact    company_contacts @relation(fields: [company_contact_id], references: [id])
+  company            companies        @relation(fields: [company_id], references: [id])
+  created_by         users            @relation(fields: [created_by_id], references: [id])
+  cylinder           cylinders?       @relation(fields: [cylinder_id], references: [id], onDelete: Restrict)
+
   @@index([company_id])
   @@index([status])
 }
 
-
 model workorder_headers {
-  id                        Int             @id @default(autoincrement())
-  company_id                Int
-  company                   companies       @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  work_order_date           DateTime        @default(now())
-  work_order_number         String          @unique  
-  cylinders                 Int             @default(0)
-  mileage_fee               Decimal         @db.Decimal(12, 2)
-  miscellaneous_charges     Decimal         @db.Decimal(12, 2)
-  hourly_fee                Decimal         @db.Decimal(12, 2) 
-  status                    String
-  // Common fields
-  created_by_id             Int
-  created_by                users           @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
-  created_at                DateTime        @default(now())
-  updated_at                DateTime        @updatedAt    
+  id                    Int       @id @default(autoincrement())
+  company_id            Int
+  work_order_date       DateTime  @default(now())
+  work_order_number     String    @unique
+  cylinders             Int       @default(0)
+  mileage_fee           Decimal   @db.Decimal(12, 2)
+  miscellaneous_charges Decimal   @db.Decimal(12, 2)
+  hourly_fee            Decimal   @db.Decimal(12, 2)
+  status                String
+  created_by_id         Int
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  company               companies @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  created_by            users     @relation(fields: [created_by_id], references: [id])
 }
 
-// Invoice models
-
-// model invoice_headers {
-//   id                    Int              @id @default(autoincrement())
-//   company               companies        @relation(fields: [companyId], references: [id])
-//   companyId             Int
-//   invoice_number        String           @unique
-//   invoice_date          DateTime    
-//   service_date          String
-//   cost_code             String    
-//   ticket_number         String
-//   category              String
-//   authorized_by         String
-//   description           String
-//   line_amount           Decimal          @db.Decimal(12,2)  
-//   mileage_fee           Decimal          @db.Decimal(12,2)
-//   miscellaneous_fee     Decimal          @db.Decimal(12,2)
-//   hourly_fee            Decimal          @db.Decimal(12,2)
-//   payment_status        String
-//   created_by_id         Int
-//   created_by            users            @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
-//   created_at            DateTime         @default(now())
-//   updated_at            DateTime         @updatedAt    
-//   lineItems             invoice_lines[]
-// }
-
-// model invoice_lines {
-//   id                  Int      @id      @default(autoincrement())
-//   invoice             invoice_headers   @relation(fields: [invoiceId], references: [id])
-//   invoiceId           Int  
-//   sample_checkin      sample_checkin    @relation(fields: [sample_checkin_id], references: [id])
-//   sample_checkin_id   Int
-//   analysis_number     String  
-//   report_number       String?
-//   quantity            Int
-//   unit_price          Decimal           @db.Decimal(12,2)  
-//   amount              Decimal           @db.Decimal(12,2)
-//   created_by_id       Int
-//   created_by          users           @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
-//   created_at          DateTime        @default(now())
-//   updated_at          DateTime        @updatedAt    
-// }
+view open_checkout {
+  id              Int?
+  company_name    String?
+  cylinder_type   String?
+  cylinder_number String?
+  contact_name    String?
+  phone           String?
+  email           String?
+  checkout_date   DateTime?
+}

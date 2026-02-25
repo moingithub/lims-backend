@@ -2,6 +2,11 @@
 GET {{baseUrl}}/cylinder_checkout
 Authorization: Bearer {{authToken}}
 
+### List Oopen checkouts with details
+GET {{baseUrl}}/cylinder_checkout/open
+Authorization: Bearer {{authToken}}
+
+
 ### List open checkouts
 GET {{baseUrl}}/cylinder_checkout?is_returned=false
 Authorization: Bearer {{authToken}}

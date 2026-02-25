@@ -4,6 +4,25 @@ const authorize = require("../middleware/authorize");
 
 const router = express.Router();
 
+// GET /open - fetch open checkouts from the view
+router.get("/open", async (req, res) => {
+  try {
+    // Optionally, restrict by company if customer
+    let where = {};
+    if (isCustomerWithCompany(req)) {
+      where.company_name = req.user.company_name || undefined;
+    }
+    // Prisma exposes views as model-like objects
+    const openCheckouts = await prisma.open_checkout.findMany({
+      where,
+      orderBy: { id: "asc" },
+    });
+    return res.json(openCheckouts);
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to fetch open checkouts" });
+  }
+});
+
 function isCustomerWithCompany(req) {
   return (
     req &&
