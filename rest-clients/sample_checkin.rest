@@ -15,11 +15,11 @@ GET {{baseUrl}}/sample_checkin/workorders?status=Pending
 Authorization: Bearer {{authToken}}
 
 ### Get work order for edit by work order number
-GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-492856
+GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-004169
 Authorization: Bearer {{authToken}}
 
 ### Get sample check-in by id
-GET {{baseUrl}}/sample_checkin/4
+GET {{baseUrl}}/sample_checkin/2
 Authorization: Bearer {{authToken}}
 
 ### Create sample check-in
@@ -28,16 +28,16 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "company_id": 1,
-  "company_contact_id": 1,
+  "company_id": 3,
+  "company_contact_id": 5,
   "analysis_type_id": 1,
-  "area_id": 1,
-  "customer_cylinder": true,
+  "area_id": 2,
+  "customer_cylinder": false,
   "rushed": false,
   "sampled_by_lab": false,
-  "cylinder_id": null,
-  "cylinder_number": "CYL-0001",  
-  "analysis_number": "AN-0011",
+  "cylinder_id": 1,
+  "cylinder_number": "3001",  
+  "analysis_number": "2026-00003",
   "producer": "Demo Producer",
   "well_name": "Well-001",
   "meter_number": "MTR-001",
@@ -53,7 +53,13 @@ Content-Type: application/json
   "invoice_ref_value": "WO-0002",
   "remarks": "API create",
   "scanned_tag_image": null,
-  "work_order_number": "WO-0002",
+  "work_order_number": "WO-501349",
+  "h2s_pop_fee": 500.00,
+  "standard_rate": 500.00,
+  "applied_rate": 500.00,
+  "sample_fee": 500.00,
+  "h2_pop_fee": 500.00,
+  "spot_composite_fee": 500.00,
   "status": "Pending"
 }
 

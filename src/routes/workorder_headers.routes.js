@@ -17,6 +17,8 @@ router.put("/by-number/:work_order_number", async (req, res) => {
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
+      miles,
+      rate_per_mile,
       status,
       created_by_id,
       created_at,
@@ -49,81 +51,8 @@ router.put("/by-number/:work_order_number", async (req, res) => {
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
-        status,
-        created_by_id,
-        created_at,
-        updated_at,
-      },
-    });
-    res.json(updated);
-  } catch (err) {
-    if (
-      err.code === "P2002" &&
-      err.meta &&
-      err.meta.target &&
-      err.meta.target.includes("work_order_number")
-    ) {
-      return res.status(400).json({
-        error: "Unique constraint failed on the fields: (work_order_number)",
-      });
-    }
-    if (err.code === "P2025") {
-      return res.status(404).json({ error: "workorder_header not found" });
-    }
-    res.status(500).json({
-      error: "Failed to update workorder_header",
-      detail: err.message,
-    });
-  }
-});
-// Duplicate require and router initialization removed
-
-// Update workorder_header by work_order_number
-router.put("/by-number/:work_order_number", async (req, res) => {
-  const work_order_number = req.params.work_order_number;
-  if (!work_order_number)
-    return res.status(400).json({ error: "work_order_number is required" });
-  try {
-    const {
-      company_id,
-      work_order_date,
-      work_order_number: new_work_order_number,
-      cylinders,
-      mileage_fee,
-      miscellaneous_charges,
-      hourly_fee,
-      status,
-      created_by_id,
-      created_at,
-      updated_at,
-    } = req.body;
-
-    // Validate new work_order_number exists in sample_checkin if updating
-    if (
-      new_work_order_number !== undefined &&
-      new_work_order_number !== work_order_number
-    ) {
-      const exists = await prisma.sample_checkin.findFirst({
-        where: { work_order_number: new_work_order_number },
-        select: { id: true },
-      });
-      if (!exists) {
-        return res.status(400).json({
-          error: "work_order_number does not exist in sample_checkin",
-        });
-      }
-    }
-
-    const updated = await prisma.workorder_headers.update({
-      where: { work_order_number },
-      data: {
-        company_id,
-        work_order_date,
-        work_order_number: new_work_order_number ?? work_order_number,
-        cylinders,
-        mileage_fee,
-        miscellaneous_charges,
-        hourly_fee,
+        miles,
+        rate_per_mile,
         status,
         created_by_id,
         created_at,
@@ -194,12 +123,13 @@ router.get("/for_invoice", async (req, res) => {
             rushed: true,
             created_by: true,
             analysis_type_id: true,
+            standard_rate: true,
+            applied_rate: true,
+            sample_fee: true,
+            h2_pop_fee: true,
             analysis_pricing: {
               select: {
                 analysis_type: true,
-                standard_rate: true,
-                rushed_rate: true,
-                sample_fee: true,
               },
             },
           },
@@ -207,11 +137,13 @@ router.get("/for_invoice", async (req, res) => {
 
         // Map items to required format
         const mappedItems = items.map((item) => {
-          // Calculate price
-          const price = item.rushed
-            ? Number(item.analysis_pricing?.rushed_rate || 0)
-            : Number(item.analysis_pricing?.standard_rate || 0);
-          const sampleFee = Number(item.analysis_pricing?.sample_fee || 0);
+          // Calculate price: use applied_rate if non-zero, otherwise fall back to standard_rate
+          const appliedRate = Number(item.applied_rate || 0);
+          const effectiveRate =
+            appliedRate !== 0 ? appliedRate : Number(item.standard_rate || 0);
+          const sampleFee = Number(item.sample_fee || 0);
+          const h2PopFee = Number(item.h2_pop_fee || 0);
+          const price = effectiveRate + sampleFee + h2PopFee;
           return {
             id: item.id,
             cylinder_number: item.cylinder_number,
@@ -220,7 +152,7 @@ router.get("/for_invoice", async (req, res) => {
             meter_number: item.meter_number,
             well_name: item.well_name,
             rushed: Boolean(item.rushed),
-            price: price + sampleFee,
+            price,
           };
         });
 
@@ -245,6 +177,8 @@ router.get("/for_invoice", async (req, res) => {
           mileage_fee: header.mileage_fee,
           miscellaneous_charges: header.miscellaneous_charges,
           hourly_fee: header.hourly_fee,
+          miles: header.miles,
+          rate_per_mile: header.rate_per_mile,
           billing_reference_type: header.billing_reference_type || null,
           billing_reference_number: header.billing_reference_number || null,
           created_by: header.created_by_id,
@@ -296,6 +230,8 @@ router.post("/", async (req, res) => {
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
+      miles,
+      rate_per_mile,
       status,
       created_by_id,
       created_at,
@@ -322,6 +258,8 @@ router.post("/", async (req, res) => {
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
+        miles,
+        rate_per_mile,
         status,
         created_by_id,
         created_at,
@@ -361,6 +299,8 @@ router.put("/:id", async (req, res) => {
       mileage_fee,
       miscellaneous_charges,
       hourly_fee,
+      miles,
+      rate_per_mile,
       status,
       created_by_id,
       created_at,
@@ -390,6 +330,8 @@ router.put("/:id", async (req, res) => {
         mileage_fee,
         miscellaneous_charges,
         hourly_fee,
+        miles,
+        rate_per_mile,
         status,
         created_by_id,
         created_at,

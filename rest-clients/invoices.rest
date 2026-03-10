@@ -1,0 +1,115 @@
+### Create Invoice with Lines
+POST {{baseUrl}}/invoices
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "company_id": 1,
+  "invoice_date": "2026-02-03",
+  "service_start_date": "2025-12-31",
+  "service_end_date": "2026-01-29",
+  "po_number": "464828",
+  "location": "Leonidas Plant",
+  "miles": 72,
+  "rate_per_mile": 0.67,
+  "mileage_fee": 48.24,
+  "miscellaneous_charges": 0,
+  "hourly_fee": 250,  
+  "subtotal": 383.24,  
+  "tax_amount":0,
+  "total_amount": 383.24,
+  "invoiceLines": [
+    {
+      "sample_checkin_id": 2,
+      "analysis_number": "2026-00001",
+      "description": "Cryo NGL Analysis",
+      "service_date": "2026-01-01",
+      "analysis_method": "GPA 2177",
+      "quantity": 1,
+      "unit_price": 85,
+      "amount": 85
+    },
+    {
+      "sample_checkin_id": 3,
+      "analysis_number": "2026-00002",
+      "description": "Acid Gas Analysis",
+      "service_date": "2026-01-02",
+      "analysis_method": "GPA 2261",
+      "quantity": 1,
+      "unit_price": 45,
+      "amount": 45
+    }
+  ]
+}
+
+### Invoice List View
+GET {{baseUrl}}/invoices/list
+Authorization: Bearer {{authToken}}
+
+### List all Invoices
+GET {{baseUrl}}/invoices
+Authorization: Bearer {{authToken}}
+
+### Get Invoice by ID
+GET {{baseUrl}}/invoices/1
+Authorization: Bearer {{authToken}}
+
+### Update Invoice
+PUT {{baseUrl}}/invoices/4
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "company_id": 1,
+  "invoice_date": "2026-02-03",
+  "service_start_date": "2025-12-31",
+  "service_end_date": "2026-01-29",
+  "po_number": "464828",
+  "location": "Leonidas Plant",
+  "authorized_by": "John Smith",
+  "miles": 72,
+  "rate_per_mile": 0.67,
+  "mileage_fee": 48.24,
+  "miscellaneous_charges": 0,
+  "hourly_fee": 250,
+  "subtotal": 383.24,
+  "tax_amount": 0,
+  "total_amount": 383.24,
+  "status": "final",
+  "payment_status": "Paid",
+  "invoiceLines": [
+    {
+      "sample_checkin_id": 2,
+      "analysis_number": "2026-00001",
+      "description": "Cryo NGL Analysis",
+      "service_date": "2026-01-01",
+      "analysis_method": "GPA 2177",
+      "quantity": 1,
+      "unit_price": 85,
+      "amount": 85
+    },
+    {
+      "sample_checkin_id": 3,
+      "analysis_number":"2026-00001",
+      "description": "Acid Gas Analysis",
+      "service_date": "2026-01-02",
+      "analysis_method": "GPA 2261",
+      "quantity": 1,
+      "unit_price": 45,
+      "amount": 45
+    }
+  ]
+}
+
+### Update Payment Status
+PUT {{baseUrl}}/invoices/1/payment-status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "payment_status": "Pending"
+}
+
+### Delete Invoice
+DELETE {{baseUrl}}/invoices/4
+Authorization: Bearer {{authToken}}

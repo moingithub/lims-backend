@@ -70,6 +70,7 @@ async function getRolePermissions(roleId) {
 
 async function resolveModuleIdentifier(identifier) {
   // identifier may be a number (module id) or string (module name)
+  // console.log(identifier);
   if (!identifier && identifier !== 0) return null;
   // numeric string or number
   if (typeof identifier === "number") return Number(identifier);
@@ -79,7 +80,7 @@ async function resolveModuleIdentifier(identifier) {
   // otherwise treat as module name
   await loadPermissionsCache();
   const m = permissionsCache.moduleNameToId.get(
-    String(identifier).toLowerCase()
+    String(identifier).toLowerCase(),
   );
   return m || null;
 }
@@ -254,6 +255,15 @@ function prismaErrorDetail(err) {
   return null;
 }
 
+/**
+ * Clear the permissions cache and reload the latest from the database.
+ * Returns the refreshed cache.
+ */
+async function reloadPermissionsCache() {
+  clearPermissionsCache();
+  return await loadPermissionsCache(true);
+}
+
 module.exports = {
   prisma,
   isAdminRole,
@@ -264,6 +274,7 @@ module.exports = {
   // permissions cache helpers
   loadPermissionsCache,
   clearPermissionsCache,
+  reloadPermissionsCache,
   getRolePermissions,
   resolveModuleIdentifier,
 };

@@ -34,6 +34,7 @@ module.exports = function authorize(moduleIdentifier) {
     let moduleId = null;
     try {
       moduleId = await resolveModuleIdentifier(moduleIdentifier);
+      // Debug: Here module id is coming null
     } catch (err) {
       logger.error("authorize.resolveModuleIdentifier failed:", {
         message: err?.message,
@@ -46,6 +47,7 @@ module.exports = function authorize(moduleIdentifier) {
 
     try {
       const perms = await getRolePermissions(roleId);
+
       if (perms && perms.has(Number(moduleId))) return next();
     } catch (err) {
       logger.error("authorize getRolePermissions failed:", {

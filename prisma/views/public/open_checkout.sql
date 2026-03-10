@@ -1,26 +1,22 @@
 SELECT
-  cylinder_checkout.id,
-  companies.name AS company_name,
-  cylinders.cylinder_type,
-  cylinders.cylinder_number,
-  company_contacts.name AS contact_name,
-  company_contacts.phone,
-  company_contacts.email,
-  cylinder_checkout.created_at AS checkout_date
+  cc.id,
+  comp.name AS company_name,
+  cyl.cylinder_type,
+  cyl.cylinder_number,
+  contact.name AS contact_name,
+  contact.phone,
+  contact.email,
+  cc.created_at AS checkout_date
 FROM
   (
     (
       (
-        cylinder_checkout
-        LEFT JOIN cylinders ON ((cylinder_checkout.cylinder_id = cylinders.id))
+        cylinder_checkout cc
+        LEFT JOIN cylinders cyl ON ((cc.cylinder_id = cyl.id))
       )
-      LEFT JOIN companies ON ((cylinder_checkout.company_id = companies.id))
+      LEFT JOIN companies comp ON ((cc.company_id = comp.id))
     )
-    LEFT JOIN company_contacts ON (
-      (
-        cylinder_checkout.company_contact_id = company_contacts.id
-      )
-    )
+    LEFT JOIN company_contacts contact ON ((cc.company_contact_id = contact.id))
   )
 WHERE
-  (cylinder_checkout.is_returned = false);
+  (cc.is_returned = false);

@@ -66,6 +66,8 @@ router.post("/", authorize("companies"), async (req, res) => {
       billing_ref,
       billing_ref_no,
       billing_address,
+      charge_h2_pop_fee,
+      h2_pop_fee_rate,
       active,
     } = req.body;
 
@@ -82,6 +84,9 @@ router.post("/", authorize("companies"), async (req, res) => {
         billing_ref: billing_ref ?? null,
         billing_ref_no: billing_ref_no ?? null,
         billing_address: billing_address ?? null,
+        charge_h2_pop_fee:
+          typeof charge_h2_pop_fee === "boolean" ? charge_h2_pop_fee : false,
+        h2_pop_fee_rate: h2_pop_fee_rate !== undefined ? h2_pop_fee_rate : 0,
         active: typeof active === "boolean" ? active : true,
         created_by:
           req.user && req.user.userId
@@ -120,6 +125,8 @@ router.put("/:id", authorize("companies"), async (req, res) => {
       billing_ref,
       billing_ref_no,
       billing_address,
+      charge_h2_pop_fee,
+      h2_pop_fee_rate,
       active,
     } = req.body;
 
@@ -133,6 +140,10 @@ router.put("/:id", authorize("companies"), async (req, res) => {
         ...(billing_ref !== undefined ? { billing_ref } : {}),
         ...(billing_ref_no !== undefined ? { billing_ref_no } : {}),
         ...(billing_address !== undefined ? { billing_address } : {}),
+        ...(charge_h2_pop_fee !== undefined
+          ? { charge_h2_pop_fee: Boolean(charge_h2_pop_fee) }
+          : {}),
+        ...(h2_pop_fee_rate !== undefined ? { h2_pop_fee_rate } : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
       },
     });

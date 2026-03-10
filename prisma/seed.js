@@ -26,6 +26,34 @@ const roleDescriptions = {
   Customer: "Access to their company data",
 };
 
+// Canonical list of module names that should exist in the modules table.
+// These should align with authorize("<name>") usage in the routers.
+const DEFAULT_MODULE_NAMES = [
+  "roles",
+  "users",
+  "modules",
+  "companies",
+  "role_modules",
+  "company_areas",
+  "company_contacts",
+  "cylinders",
+  "analysis_pricing",
+  "dashboard",
+  "cylinder_checkout",
+  "sample_checkin",
+  "work_orders",
+  "generate_invoice",
+  "invoices",
+  "cylinder_master",
+  "company_master",
+  "contacts",
+  "import_machine_report",
+  "cylinder_inventory",
+  "analysis_reports",
+  "open_checkouts",
+  "role_module",
+];
+
 async function upsertRole(roleName) {
   // Use upsert by unique field - ensure the DB has a unique constraint on the chosen key.
   const where = {};
@@ -120,43 +148,20 @@ async function ensureAdminHasAllModules(roleId, createdByUserId) {
 }
 
 async function createDefaultModulesIfEmpty(createdByUserId = 1) {
-  const count = await prisma.modules.count();
-  if (count === 0) {
-    const defaultModuleNames = [
-      "Dashboard",
-      "Cylinder Check-Out",
-      "Sample Check-In",
-      "Work Orders",
-      "Generate Invoice",
-      "Invoices",
-      "Analysis Pricing",
-      "Cylinder Master",
-      "Company Master",
-      "Contacts",
-      "Company Areas",
-      "Import Machine Report",
-      "Cylinder Inventory",
-      "Analysis Reports",
-      "Pending Work Orders",
-      "Roles",
-      "Users",
-      "Modules",
-      "Role Module",
-    ];
-    for (const n of defaultModuleNames) {
-      const where = {};
-      where[moduleKey] = n;
-      await prisma.modules.upsert({
-        where,
-        create: {
-          [moduleKey]: n,
-          description: n,
-          created_by: { connect: { id: createdByUserId } },
-          active: true,
-        },
-        update: {},
-      });
-    }
+  // Always ensure the canonical set of modules exists; upsert keeps this idempotent
+  for (const n of DEFAULT_MODULE_NAMES) {
+    const where = {};
+    where[moduleKey] = n;
+    await prisma.modules.upsert({
+      where,
+      create: {
+        [moduleKey]: n,
+        description: n,
+        created_by: { connect: { id: createdByUserId } },
+        active: true,
+      },
+      update: {},
+    });
   }
 }
 
@@ -182,7 +187,7 @@ async function main() {
     });
     if (!existing) {
       console.warn(
-        `ADMIN_COMPANY_ID=${companyId} was provided but no company found; creating default company instead.`
+        `ADMIN_COMPANY_ID=${companyId} was provided but no company found; creating default company instead.`,
       );
       const company = await getOrCreateDefaultCompany();
       companyId = company.id;
@@ -193,30 +198,6 @@ async function main() {
 
   // seed modules using the real admin id as created_by
   await createDefaultModulesIfEmpty(adminUser.id);
-
-  // Ensure API-identifier modules exist for newly added routes
-  // These names should match authorize("<name>") usage in routers
-  const apiModules = [
-    "company_areas",
-    "company_contacts",
-    "cylinders",
-    "analysis_pricing",
-    "cylinder_checkout",
-  ];
-  for (const modName of apiModules) {
-    const where = {};
-    where[moduleKey] = modName;
-    await prisma.modules.upsert({
-      where,
-      create: {
-        [moduleKey]: modName,
-        description: modName,
-        created_by: { connect: { id: adminUser.id } },
-        active: true,
-      },
-      update: {},
-    });
-  }
 
   // ensure role_modules mapping for admin role (grant admin all modules)
   await ensureAdminHasAllModules(roleId, adminUser.id);
@@ -269,9 +250,9 @@ async function main() {
   let cyl1 = null;
   try {
     cyl1 = await prisma.cylinders.upsert({
-      where: { cylinder_number: "CYL-0001" },
+      where: { cylinder_number: "30001" },
       create: {
-        cylinder_number: "CYL-0001",
+        cylinder_number: "30001",
         // per additional-db-scripts.sql: cylinder_type IN ('Gas','Liquid')
         cylinder_type: "Gas",
         track_inventory: true,
@@ -382,7 +363,7 @@ async function main() {
   console.log("Seeding complete.");
   console.log(`Admin user: ${ADMIN_EMAIL}`);
   console.log(
-    "Remember to change the default password or set ADMIN_PASSWORD via env."
+    "Remember to change the default password or set ADMIN_PASSWORD via env.",
   );
 }
 

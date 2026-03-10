@@ -9,6 +9,7 @@ Content-Type: application/json
 
 {
   "company_id": 1,
+  "company_area_id": 1,
   "name": "Moin Ansari2",
   "phone": "+1-555-003041",
   "email": "john.do1e@example.com",

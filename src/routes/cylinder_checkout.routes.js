@@ -5,7 +5,7 @@ const authorize = require("../middleware/authorize");
 const router = express.Router();
 
 // GET /open - fetch open checkouts from the view
-router.get("/open", async (req, res) => {
+router.get("/open", authorize("cylinder_checkout"), async (req, res) => {
   try {
     // Optionally, restrict by company if customer
     let where = {};
@@ -35,7 +35,7 @@ function isCustomerWithCompany(req) {
 }
 
 // List cylinder checkouts (optional filter by is_returned via query param)
-router.get("/", async (req, res) => {
+router.get("/", authorize("cylinder_checkout"), async (req, res) => {
   try {
     const where = {};
     if (isCustomerWithCompany(req)) {
@@ -58,7 +58,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get by id
-router.get("/:id", async (req, res) => {
+router.get("/:id", authorize("cylinder_checkout"), async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0)
     return res.status(400).json({ error: "Invalid id" });

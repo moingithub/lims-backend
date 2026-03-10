@@ -12,8 +12,8 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "role_id": 1,
-  "module_id": 1,
+  "role_id": 2,
+  "module_id": 2,
   "active": true,
   "created_by_id": 1
 }

@@ -240,12 +240,15 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         rushed: true,
         well_name: true,
         meter_number: true,
+        sample_type: true,
         standard_rate: true,
         applied_rate: true,
         sample_fee: true,
         h2_pop_fee: true,
         spot_composite_fee: true,
         analysis_type_id: true,
+        area_id: true,
+        company_area: { select: { area: true, region: true } },
         analysis_pricing: { select: { analysis_type: true } },
       },
     });
@@ -267,6 +270,10 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         rushed: Boolean(item.rushed ?? false),
         well_name: item.well_name ?? null,
         meter_number: item.meter_number ?? null,
+        sample_type: item.sample_type ?? null,
+        area_id: item.area_id ?? null,
+        area: item.company_area?.area ?? null,
+        area_region: item.company_area?.region ?? null,
         analysis_type_id: item.analysis_type_id ?? null,
         analysis_type: item.analysis_pricing?.analysis_type ?? null,
         standard_rate: toNumber(item.standard_rate),
@@ -370,6 +377,11 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       scanned_tag_image,
       work_order_number,
       status,
+      standard_rate,
+      applied_rate,
+      sample_fee,
+      h2_pop_fee,
+      spot_composite_fee,
     } = req.body || {};
 
     // Required core fields
@@ -568,9 +580,14 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         work_order_number: work_order_number ?? null,
         status: String(status),
         cylinder_number: finalCylinderNumber,
-        standard_rate: standardRate,
-        applied_rate: appliedRate,
-        sample_fee: sampleFee,
+        standard_rate:
+          standard_rate !== undefined ? Number(standard_rate) : standardRate,
+        applied_rate:
+          applied_rate !== undefined ? Number(applied_rate) : appliedRate,
+        sample_fee: sample_fee !== undefined ? Number(sample_fee) : sampleFee,
+        h2_pop_fee: h2_pop_fee !== undefined ? Number(h2_pop_fee) : 0,
+        spot_composite_fee:
+          spot_composite_fee !== undefined ? Number(spot_composite_fee) : 0,
         created_by: { connect: { id: Number(req.user.userId) } },
       },
     });
@@ -630,6 +647,11 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       scanned_tag_image,
       work_order_number,
       status,
+      standard_rate,
+      applied_rate,
+      sample_fee,
+      h2_pop_fee,
+      spot_composite_fee,
     } = req.body || {};
 
     const validateFK = async (model, idVal, name) => {
@@ -714,6 +736,11 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
 
     if (customer_cylinder !== undefined)
       updates.customer_cylinder = Boolean(customer_cylinder);
+
+    if (rushed !== undefined) updates.rushed = Boolean(rushed);
+
+    if (sampled_by_lab !== undefined)
+      updates.sampled_by_lab = Boolean(sampled_by_lab);
 
     if (cylinder_number !== undefined)
       updates.cylinder_number = cylinder_number ?? null;
@@ -819,6 +846,19 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
     if (work_order_number !== undefined)
       updates.work_order_number = work_order_number ?? null;
     if (status !== undefined) updates.status = String(status);
+    if (standard_rate !== undefined)
+      updates.standard_rate =
+        standard_rate === null ? null : Number(standard_rate);
+    if (applied_rate !== undefined)
+      updates.applied_rate =
+        applied_rate === null ? null : Number(applied_rate);
+    if (sample_fee !== undefined)
+      updates.sample_fee = sample_fee === null ? null : Number(sample_fee);
+    if (h2_pop_fee !== undefined)
+      updates.h2_pop_fee = h2_pop_fee === null ? null : Number(h2_pop_fee);
+    if (spot_composite_fee !== undefined)
+      updates.spot_composite_fee =
+        spot_composite_fee === null ? null : Number(spot_composite_fee);
 
     const updated = await prisma.sample_checkin.update({
       where: { id },

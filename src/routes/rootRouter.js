@@ -14,6 +14,7 @@ const cylinderCheckoutRouter = require("./cylinder_checkout.routes");
 const sampleCheckinRouter = require("./sample_checkin.routes");
 const authRouter = require("./auth.routes");
 const cylinderInventoryRouter = require("./cylinder_inventory.routes");
+const invoicesRouter = require("./invoices.routes");
 const jwtAuth = require("../middleware/jwtAuth");
 const authorize = require("../middleware/authorize");
 
@@ -24,59 +25,23 @@ router.get("/", (req, res) => {
 });
 
 // Protect API routes with JWT auth middleware (allow /auth unauthenticated)
-router.use("/roles", jwtAuth, authorize("roles"), rolesRouter);
-router.use("/users", jwtAuth, authorize("users"), usersRouter);
-router.use("/modules", jwtAuth, authorize("modules"), modulesRouter);
-router.use("/companies", jwtAuth, authorize("companies"), companiesRouter);
-router.use(
-  "/role_modules",
-  jwtAuth,
-  authorize("role_modules"),
-  roleModulesRouter,
-);
-router.use(
-  "/company_areas",
-  jwtAuth,
-  authorize("company_areas"),
-  companyAreasRouter,
-);
-router.use(
-  "/company_contacts",
-  jwtAuth,
-  authorize("company_contacts"),
-  companyContactsRouter,
-);
-router.use("/cylinders", jwtAuth, authorize("cylinders"), cylindersRouter);
-router.use(
-  "/analysis_pricing",
-  jwtAuth,
-  authorize("analysis_pricing"),
-  analysisPricingRouter,
-);
-router.use(
-  "/cylinder_checkout",
-  jwtAuth,
-  authorize("cylinder_checkout"),
-  cylinderCheckoutRouter,
-);
-router.use(
-  "/sample_checkin",
-  jwtAuth,
-  authorize("sample_checkin"),
-  sampleCheckinRouter,
-);
-router.use(
-  "/workorder_headers",
-  jwtAuth,
-  authorize("workorder_headers"),
-  workorderHeadersRouter,
-);
-router.use(
-  "/cylinder-inventory",
-  jwtAuth,
-  authorize("cylinders"),
-  cylinderInventoryRouter,
-);
+// For master/lookup data, rely on per-route authorization so read-only
+// endpoints remain available to all authenticated users while writes stay
+// protected inside each router.
+router.use("/roles", jwtAuth, rolesRouter);
+router.use("/users", jwtAuth, usersRouter);
+router.use("/modules", jwtAuth, modulesRouter);
+router.use("/companies", jwtAuth, companiesRouter);
+router.use("/role_modules", jwtAuth, roleModulesRouter);
+router.use("/company_areas", jwtAuth, companyAreasRouter);
+router.use("/company_contacts", jwtAuth, companyContactsRouter);
+router.use("/cylinders", jwtAuth, cylindersRouter);
+router.use("/analysis_pricing", jwtAuth, analysisPricingRouter);
+router.use("/cylinder_checkout", jwtAuth, cylinderCheckoutRouter);
+router.use("/sample_checkin", jwtAuth, sampleCheckinRouter);
+router.use("/workorder_headers", jwtAuth, workorderHeadersRouter);
+router.use("/cylinder_inventory", jwtAuth, cylinderInventoryRouter);
+router.use("/invoices", jwtAuth, invoicesRouter);
 router.use("/auth", authRouter);
 
 module.exports = router;

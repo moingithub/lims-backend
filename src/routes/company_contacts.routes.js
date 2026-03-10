@@ -61,7 +61,8 @@ router.post("/", authorize("company_contacts"), async (req, res) => {
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: "Login required" });
     }
-    const { company_id, name, phone, email, active } = req.body || {};
+    const { company_id, company_area_id, name, phone, email, active } =
+      req.body || {};
 
     if (!name || !phone || !email) {
       return res
@@ -89,9 +90,26 @@ router.post("/", authorize("company_contacts"), async (req, res) => {
     if (!company)
       return res.status(400).json({ error: "company_id does not exist" });
 
+    // Validate company_area_id if provided
+    if (company_area_id != null) {
+      const areaId = Number(company_area_id);
+      if (!Number.isInteger(areaId) || areaId <= 0)
+        return res.status(400).json({ error: "Invalid company_area_id" });
+      const area = await prisma.company_areas.findUnique({
+        where: { id: areaId },
+      });
+      if (!area)
+        return res
+          .status(400)
+          .json({ error: "company_area_id does not exist" });
+    }
+
     const created = await prisma.company_contacts.create({
       data: {
         company: { connect: { id: companyId } },
+        ...(company_area_id != null
+          ? { company_area: { connect: { id: Number(company_area_id) } } }
+          : {}),
         name,
         phone,
         email,
@@ -149,7 +167,8 @@ router.put("/:id", authorize("company_contacts"), async (req, res) => {
       }
     }
 
-    const { company_id, name, phone, email, active } = req.body || {};
+    const { company_id, company_area_id, name, phone, email, active } =
+      req.body || {};
 
     // If changing company_id, validate
     if (company_id !== undefined && company_id !== null) {
@@ -170,11 +189,30 @@ router.put("/:id", authorize("company_contacts"), async (req, res) => {
         return res.status(400).json({ error: "company_id does not exist" });
     }
 
+    // Validate company_area_id if provided
+    if (company_area_id !== undefined && company_area_id !== null) {
+      const areaId = Number(company_area_id);
+      if (!Number.isInteger(areaId) || areaId <= 0)
+        return res.status(400).json({ error: "Invalid company_area_id" });
+      const area = await prisma.company_areas.findUnique({
+        where: { id: areaId },
+      });
+      if (!area)
+        return res
+          .status(400)
+          .json({ error: "company_area_id does not exist" });
+    }
+
     const updated = await prisma.company_contacts.update({
       where: { id },
       data: {
         ...(company_id !== undefined
           ? { company: { connect: { id: Number(company_id) } } }
+          : {}),
+        ...(company_area_id !== undefined
+          ? company_area_id === null
+            ? { company_area: { disconnect: true } }
+            : { company_area: { connect: { id: Number(company_area_id) } } }
           : {}),
         ...(name !== undefined ? { name } : {}),
         ...(phone !== undefined ? { phone } : {}),

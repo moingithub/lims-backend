@@ -42,7 +42,7 @@ router.post("/", authorize("modules"), async (req, res) => {
 
     const created = await prisma.modules.create({
       data: {
-        name: moduleName,
+        name: moduleName.toLowerCase(),
         description: description ?? "",
         active: typeof active === "boolean" ? active : true,
         created_by: { connect: { id: Number(req.user.userId) } },
@@ -67,8 +67,8 @@ router.put("/:id", authorize("modules"), async (req, res) => {
     // Accept either `module_name` (legacy) or `name` (new)
     const { module_name, name, description, active } = req.body;
     const updatedData = {
-      ...(module_name !== undefined ? { name: module_name } : {}),
-      ...(name !== undefined ? { name } : {}),
+      ...(module_name !== undefined ? { name: module_name.toLowerCase() } : {}),
+      ...(name !== undefined ? { name: name.toLowerCase() } : {}),
       ...(description !== undefined ? { description } : {}),
       ...(active !== undefined ? { active: Boolean(active) } : {}),
     };

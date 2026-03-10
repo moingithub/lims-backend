@@ -1,5 +1,5 @@
 ### Get workorder_header by work_order_number
-GET {{baseUrl}}/workorder_headers/by-number/WO-584323
+GET {{baseUrl}}/workorder_headers/by-number/WO-964806
 Authorization: Bearer {{authToken}}
 ### List all workorder_headers
 GET {{baseUrl}}/workorder_headers
@@ -17,31 +17,37 @@ Content-Type: application/json
 {
   "company_id": 1,
   "work_order_date": "2026-01-01T00:00:00.000Z",
-  "work_order_number": "WO-492856",
+  "work_order_number": "WO-964806",
   "cylinders":2,
   "mileage_fee": 10.00,
   "miscellaneous_charges": 5.00,
   "hourly_fee": 20.00,
+  "miles": 100.00,
+  "rate_per_mile": 0.50,
   "created_by_id": 1,
   "status": "Pending"
 }
 
 ### Update workorder_header by work_order_number
-PUT {{baseUrl}}/workorder_headers/by-number/WO-492856
+PUT {{baseUrl}}/workorder_headers/by-number/WO-964806
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
+  "miles": 100.00,
+  "rate_per_mile": 0.50,
   "mileage_fee": 124.00,
   "miscellaneous_charges": 644.00,
-  "hourly_fee": 242.00,
+  "hourly_fee": 242.00,  
+  "miles": 50.00,
+  "rate_per_mile": 0.50,
   "cylinders":2,
   "created_by_id": 1,
   "status": "Submitted"
 }
 
 ### Just to mark workorer as submitted
-PUT {{baseUrl}}/workorder_headers/by-number/WO-492856
+PUT {{baseUrl}}/workorder_headers/by-number/WO-964806
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

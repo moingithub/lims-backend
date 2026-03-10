@@ -61,15 +61,17 @@ router.post("/", adminOnly(), async (req, res) => {
       return res.status(401).json({ error: "Login required" });
     }
     const { role_id, module_id, active = true } = req.body;
+
     const created = await prisma.role_modules.create({
       data: {
-        role_id: Number(role_id),
-        module_id: Number(module_id),
         active: active === undefined ? true : Boolean(active),
         created_by: { connect: { id: Number(req.user.userId) } },
+        module: { connect: { id: Number(module_id) } },
+        role: { connect: { id: Number(role_id) } },
       },
       include: { role: true, module: true },
     });
+
     // refresh permissions cache so authorize() sees the new mapping
     try {
       clearPermissionsCache();

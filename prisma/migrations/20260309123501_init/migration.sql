@@ -24,6 +24,8 @@ CREATE TABLE "companies" (
     "billing_ref" TEXT,
     "billing_ref_no" TEXT,
     "billing_address" TEXT,
+    "charge_h2_pop_fee" BOOLEAN NOT NULL DEFAULT false,
+    "h2_pop_fee_rate" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "created_by_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -90,6 +92,7 @@ CREATE TABLE "company_areas" (
 CREATE TABLE "company_contacts" (
     "id" SERIAL NOT NULL,
     "company_id" INTEGER NOT NULL,
+    "company_area_id" INTEGER,
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -199,12 +202,57 @@ CREATE TABLE "workorder_headers" (
     "mileage_fee" DECIMAL(12,2) NOT NULL,
     "miscellaneous_charges" DECIMAL(12,2) NOT NULL,
     "hourly_fee" DECIMAL(12,2) NOT NULL,
+    "miles" DECIMAL(12,2) NOT NULL,
+    "rate_per_mile" DECIMAL(12,2) NOT NULL,
     "status" TEXT NOT NULL,
     "created_by_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "workorder_headers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoice_headers" (
+    "id" SERIAL NOT NULL,
+    "company_id" INTEGER NOT NULL,
+    "invoice_number" TEXT NOT NULL,
+    "invoice_date" DATE NOT NULL,
+    "service_start_date" DATE,
+    "service_end_date" DATE,
+    "po_number" TEXT,
+    "location" TEXT,
+    "miles" DECIMAL(12,2) NOT NULL,
+    "rate_per_mile" DECIMAL(12,2) NOT NULL,
+    "mileage_fee" DECIMAL(12,2) NOT NULL,
+    "miscellaneous_charges" DECIMAL(12,2) NOT NULL,
+    "hourly_fee" DECIMAL(12,2) NOT NULL,
+    "subtotal" DECIMAL(12,2),
+    "tax_amount" DECIMAL(12,2),
+    "total_amount" DECIMAL(12,2),
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "payment_status" TEXT NOT NULL DEFAULT 'Pending',
+    "authorized_by" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "invoice_headers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoice_lines" (
+    "id" SERIAL NOT NULL,
+    "invoice_id" INTEGER NOT NULL,
+    "sample_checkin_id" INTEGER NOT NULL,
+    "analysis_number" TEXT NOT NULL,
+    "description" TEXT,
+    "service_date" DATE,
+    "report_number" TEXT,
+    "analysis_method" TEXT,
+    "quantity" DECIMAL(12,2),
+    "unit_price" DECIMAL(12,2),
+    "amount" DECIMAL(12,2),
+
+    CONSTRAINT "invoice_lines_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -252,11 +300,23 @@ CREATE INDEX "sample_checkin_status_idx" ON "sample_checkin"("status");
 -- CreateIndex
 CREATE UNIQUE INDEX "workorder_headers_work_order_number_key" ON "workorder_headers"("work_order_number");
 
--- AddForeignKey
-ALTER TABLE "users" ADD CONSTRAINT "users_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- CreateIndex
+CREATE UNIQUE INDEX "invoice_headers_invoice_number_key" ON "invoice_headers"("invoice_number");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invoice_lines_sample_checkin_id_key" ON "invoice_lines"("sample_checkin_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "invoice_lines_analysis_number_key" ON "invoice_lines"("analysis_number");
+
+-- CreateIndex
+CREATE INDEX "invoice_lines_invoice_id_idx" ON "invoice_lines"("invoice_id");
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "users" ADD CONSTRAINT "users_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "companies" ADD CONSTRAINT "companies_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -268,13 +328,13 @@ ALTER TABLE "roles" ADD CONSTRAINT "roles_created_by_id_fkey" FOREIGN KEY ("crea
 ALTER TABLE "modules" ADD CONSTRAINT "modules_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_module_id_fkey" FOREIGN KEY ("module_id") REFERENCES "modules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "company_areas" ADD CONSTRAINT "company_areas_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -284,6 +344,9 @@ ALTER TABLE "company_areas" ADD CONSTRAINT "company_areas_created_by_id_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_company_area_id_fkey" FOREIGN KEY ("company_area_id") REFERENCES "company_areas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -298,25 +361,34 @@ ALTER TABLE "analysis_pricing" ADD CONSTRAINT "analysis_pricing_created_by_id_fk
 ALTER TABLE "cylinder_checkout" ADD CONSTRAINT "cylinder_checkout_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_company_contact_id_fkey" FOREIGN KEY ("company_contact_id") REFERENCES "company_contacts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_analysis_type_id_fkey" FOREIGN KEY ("analysis_type_id") REFERENCES "analysis_pricing"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_area_id_fkey" FOREIGN KEY ("area_id") REFERENCES "company_areas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_cylinder_id_fkey" FOREIGN KEY ("cylinder_id") REFERENCES "cylinders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_company_contact_id_fkey" FOREIGN KEY ("company_contact_id") REFERENCES "company_contacts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_cylinder_id_fkey" FOREIGN KEY ("cylinder_id") REFERENCES "cylinders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_headers" ADD CONSTRAINT "invoice_headers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoice_headers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_sample_checkin_id_fkey" FOREIGN KEY ("sample_checkin_id") REFERENCES "sample_checkin"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
