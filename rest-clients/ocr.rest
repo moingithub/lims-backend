@@ -1,0 +1,16 @@
+### OCR Image Upload
+POST {{baseUrl}}/ocr/upload
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data
+
+-- Use your REST client UI to attach the file under field name `image` --
+
+# Example response:
+# {
+#   "success": true,
+#   "message": "File uploaded successfully",
+#   "filePath": "uploads/ocr/1680606931221_my_image.png",
+#   "originalName": "my_image.png",
+#   "mimeType": "image/png",
+#   "size": 12345
+# }

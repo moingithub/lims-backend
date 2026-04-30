@@ -22,6 +22,24 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/sample_checkin/2
 Authorization: Bearer {{authToken}}
 
+### Upload OCR file for sample check-in
+POST {{baseUrl}}/sample_checkin/ocr
+Authorization: Bearer {{authToken}}
+
+
+###
+POST {{baseUrl}}/sample_checkin/ocr
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=boundary123
+
+--boundary123
+Content-Disposition: form-data; name="file"; filename="Sample-ORC-Image.PNG"
+Content-Type: image/png
+
+< ./d:/Projects/LIMS-Docs/Sample-ORC-Image.PNG
+--boundary123--
+
+
 ### Create sample check-in
 POST {{baseUrl}}/sample_checkin
 Authorization: Bearer {{authToken}}

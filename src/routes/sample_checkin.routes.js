@@ -1,5 +1,9 @@
 // Duplicate require removed: express is already declared above
 const express = require("express");
+const multer = require("multer");
+const Tesseract = require("tesseract.js");
+const path = require("path");
+const fs = require("fs");
 const {
   prisma,
   prismaErrorDetail,
@@ -8,7 +12,58 @@ const {
 } = require("../lib/common");
 const authorize = require("../middleware/authorize");
 
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "uploads/ocr",
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${file.originalname}`);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
 const router = express.Router();
+
+router.post("/ocr", upload.single("file"), async (req, res) => {
+  if (!req.file || !req.file.path) {
+    return res.status(400).json({ error: "File is required" });
+  }
+
+  const filePath = path.resolve(req.file.path);
+  const originalName = req.file.originalname;
+  const extension = path.extname(originalName);
+  const filename = path.basename(originalName, extension);
+
+  try {
+    const {
+      data: { text },
+    } = await Tesseract.recognize(filePath, "eng");
+
+    console.log("OCR Text:", text);
+
+    return res.json({
+      message: "File received and OCR processed",
+      path: filePath,
+      originalName: originalName,
+      filename: filename,
+      extension: extension,
+      ocrText: text,
+    });
+  } catch (error) {
+    console.error("OCR Error:", error);
+    return res
+      .status(500)
+      .json({ error: "OCR processing failed", detail: error.message });
+  }
+});
 
 // Update work order lines fields in sample_checkin
 router.put("/update_wo_lines/:id", async (req, res) => {
@@ -62,6 +117,30 @@ function isCustomerWithCompany(req) {
     req.user.company_id !== undefined &&
     req.user.company_id !== null
   );
+}
+
+// Helper: generate work order number like WO-2026-0001
+async function generateWorkOrderNumber() {
+  const year = new Date().getFullYear();
+  const prefix = `WO-${year}-`;
+  const last = await prisma.sample_checkin.findFirst({
+    where: { work_order_number: { startsWith: prefix } },
+    orderBy: { work_order_number: "desc" },
+    select: { work_order_number: true },
+  });
+
+  const nextSeq = (() => {
+    if (last && last.work_order_number) {
+      const match = last.work_order_number.match(/^WO-\d{4}-(\d{4})$/);
+      if (match && match[1]) {
+        return Number(match[1]) + 1;
+      }
+    }
+    return 1;
+  })();
+
+  const seqStr = String(nextSeq).padStart(4, "0");
+  return `${prefix}${seqStr}`;
 }
 
 // List sample check-ins with optional filters
@@ -548,6 +627,17 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
     const appliedRate = isRushed ? rushedRate : standardRate;
     const sampleFee = isSampledByLab ? (analysis?.sample_fee ?? null) : 0;
 
+    // Always generate a new work order number for the sample check-in.
+    // Legacy behavior (now commented): use provided work_order_number if given.
+    // let finalWorkOrderNumber = work_order_number
+    //   ? String(work_order_number).trim()
+    //   : null;
+    // if (!finalWorkOrderNumber) {
+    //   finalWorkOrderNumber = await generateWorkOrderNumber();
+    // }
+
+    const finalWorkOrderNumber = await generateWorkOrderNumber();
+
     const created = await prisma.sample_checkin.create({
       data: {
         company: { connect: { id: compId } },
@@ -577,7 +667,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         invoice_ref_value: invoice_ref_value ?? null,
         remarks: remarks ?? null,
         scanned_tag_image: scanned_tag_image ?? null,
-        work_order_number: work_order_number ?? null,
+        work_order_number: finalWorkOrderNumber,
         status: String(status),
         cylinder_number: finalCylinderNumber,
         standard_rate:
