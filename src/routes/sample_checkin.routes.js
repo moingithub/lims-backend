@@ -4,6 +4,8 @@ const multer = require("multer");
 const Tesseract = require("tesseract.js");
 const path = require("path");
 const fs = require("fs");
+const { runGeminiOcr } = require("../lib/geminiOcr"); // adjust path as needed
+
 const {
   prisma,
   prismaErrorDetail,
@@ -59,6 +61,40 @@ router.post("/ocr", upload.single("file"), async (req, res) => {
     });
   } catch (error) {
     console.error("OCR Error:", error);
+    return res
+      .status(500)
+      .json({ error: "OCR processing failed", detail: error.message });
+  }
+});
+
+// OCR_AI
+
+router.post("/ocr_ai", upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "File is required" });
+  }
+
+  try {
+    // Resolve file path and name details
+    const filePath = path.resolve(req.file.path);
+    const filename = path.basename(filePath);
+    const apiPath = `/api/uploads/ocr/${filename}`;
+
+    // Read file from disk into buffer since multer is using diskStorage
+    const fileBuffer = fs.readFileSync(req.file.path);
+
+    const data = await runGeminiOcr(fileBuffer, req.file.mimetype);
+
+    return res.json({
+      message: "File received and OCR processed",
+      path: apiPath,
+      filename: filename,
+      data: data,
+    });
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return res.status(500).json({ error: "Invalid JSON returned by Gemini" });
+    }
     return res
       .status(500)
       .json({ error: "OCR processing failed", detail: error.message });

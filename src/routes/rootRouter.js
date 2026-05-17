@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 
 const rolesRouter = require("./roles.routes");
 const usersRouter = require("./users.routes");
@@ -12,7 +13,6 @@ const analysisPricingRouter = require("./analysis_pricing.routes");
 const workorderHeadersRouter = require("./workorder_headers.routes");
 const cylinderCheckoutRouter = require("./cylinder_checkout.routes");
 const sampleCheckinRouter = require("./sample_checkin.routes");
-const ocrRouter = require("./ocr.routes");
 const authRouter = require("./auth.routes");
 const cylinderInventoryRouter = require("./cylinder_inventory.routes");
 const invoicesRouter = require("./invoices.routes");
@@ -24,6 +24,12 @@ const router = express.Router();
 router.get("/", (req, res) => {
   res.json({ message: "LIMS API is running", version: "1.0.0" });
 });
+
+// Serve uploaded OCR files directly at /api/uploads/ocr
+router.use(
+  "/uploads/ocr",
+  express.static(path.join(__dirname, "..", "..", "uploads", "ocr")),
+);
 
 // Protect API routes with JWT auth middleware (allow /auth unauthenticated)
 // For master/lookup data, rely on per-route authorization so read-only
@@ -40,7 +46,6 @@ router.use("/cylinders", jwtAuth, cylindersRouter);
 router.use("/analysis_pricing", jwtAuth, analysisPricingRouter);
 router.use("/cylinder_checkout", jwtAuth, cylinderCheckoutRouter);
 router.use("/sample_checkin", jwtAuth, sampleCheckinRouter);
-router.use("/ocr", jwtAuth, ocrRouter);
 router.use("/workorder_headers", jwtAuth, workorderHeadersRouter);
 router.use("/cylinder_inventory", jwtAuth, cylinderInventoryRouter);
 router.use("/invoices", jwtAuth, invoicesRouter);

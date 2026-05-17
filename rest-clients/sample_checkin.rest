@@ -30,14 +30,30 @@ Authorization: Bearer {{authToken}}
 ###
 POST {{baseUrl}}/sample_checkin/ocr
 Authorization: Bearer {{authToken}}
-Content-Type: multipart/form-data; boundary=boundary123
+Content-Type: multipart/form-data; boundary=----FormBoundary
 
---boundary123
-Content-Disposition: form-data; name="file"; filename="Sample-ORC-Image.PNG"
+------FormBoundary
+Content-Disposition: form-data; name="file"; filename="1777547931002-Sample-ORC-Image.PNG"
 Content-Type: image/png
 
-< ./d:/Projects/LIMS-Docs/Sample-ORC-Image.PNG
---boundary123--
+# < D:\Projects\LIMS-Backend\uploads\ocr\1777547931002-Sample-ORC-Image.PNG
+< D:\Projects\LIMS-Backend\uploads/ocr/IMG_8504.jpeg
+
+------FormBoundary--
+
+### OCR By Gemini
+POST {{baseUrl}}/sample_checkin/ocr_ai
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="file"; filename="ORC-Image.PNG"
+Content-Type: image/png
+
+# < D:\Projects\LIMS-Backend\uploads\ocr\1777547931002-Sample-ORC-Image.PNG
+< D:\Projects\LIMS-Backend\uploads/ocr/IMG_8504.jpeg
+
+------FormBoundary--
 
 
 ### Create sample check-in
