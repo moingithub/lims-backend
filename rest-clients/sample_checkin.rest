@@ -33,7 +33,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: multipart/form-data; boundary=----FormBoundary
 
 ------FormBoundary
-Content-Disposition: form-data; name="file"; filename="1777547931002-Sample-ORC-Image.PNG"
+Content-Disposition: form-data; name="file"; filename="ORC-Image.PNG"
 Content-Type: image/png
 
 # < D:\Projects\LIMS-Backend\uploads\ocr\1777547931002-Sample-ORC-Image.PNG
@@ -50,8 +50,7 @@ Content-Type: multipart/form-data; boundary=----FormBoundary
 Content-Disposition: form-data; name="file"; filename="ORC-Image.PNG"
 Content-Type: image/png
 
-# < D:\Projects\LIMS-Backend\uploads\ocr\1777547931002-Sample-ORC-Image.PNG
-< D:\Projects\LIMS-Backend\uploads/ocr/IMG_8504.jpeg
+< d:\Projects\LIMS-Docs\OCR Images\IMG_8506.jpeg
 
 ------FormBoundary--
 
