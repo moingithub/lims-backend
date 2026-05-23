@@ -665,14 +665,14 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
 
     // Always generate a new work order number for the sample check-in.
     // Legacy behavior (now commented): use provided work_order_number if given.
-    // let finalWorkOrderNumber = work_order_number
-    //   ? String(work_order_number).trim()
-    //   : null;
-    // if (!finalWorkOrderNumber) {
-    //   finalWorkOrderNumber = await generateWorkOrderNumber();
-    // }
+    let finalWorkOrderNumber = work_order_number
+      ? String(work_order_number).trim()
+      : null;
+    if (!finalWorkOrderNumber) {
+      finalWorkOrderNumber = await generateWorkOrderNumber();
+    }
 
-    const finalWorkOrderNumber = await generateWorkOrderNumber();
+    // const finalWorkOrderNumber = await generateWorkOrderNumber();
 
     const created = await prisma.sample_checkin.create({
       data: {

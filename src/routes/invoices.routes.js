@@ -150,8 +150,29 @@ router.get("/:id", async (req, res) => {
     const invoice = await prisma.invoice_headers.findUnique({
       where: { id },
       include: {
-        company: { select: { id: true, name: true } },
-        invoiceLines: true,
+        company: {
+          omit: {
+            active: true,
+            created_by_id: true,
+            created_at: true,
+            updated_at: true,
+          },
+        },
+        invoiceLines: {
+          include: {
+            sample_checkin: {
+              omit: {
+                scanned_tag_image: true,
+                created_by_id: true,
+                created_at: true,
+                updated_at: true,
+              },
+              include: {
+                company_area: true,
+              },
+            },
+          },
+        },
       },
     });
     if (!invoice) return res.status(404).json({ error: "Invoice not found" });
