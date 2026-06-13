@@ -4,7 +4,7 @@ const multer = require("multer");
 const Tesseract = require("tesseract.js");
 const path = require("path");
 const fs = require("fs");
-const { runGeminiOcr } = require("../lib/geminiOcr"); // adjust path as needed
+const { runGeminiOcr } = require("../lib/geminiocr"); // adjust path as needed
 
 const {
   prisma,
@@ -115,6 +115,7 @@ router.put("/update_wo_lines/:id", async (req, res) => {
       analysis_type_id,
       rushed,
       standard_rate,
+      applied_rate,
       sample_fee,
       h2_pop_fee,
       spot_composite_fee,
@@ -126,6 +127,9 @@ router.put("/update_wo_lines/:id", async (req, res) => {
     if (rushed !== undefined) updates.rushed = Boolean(rushed);
     if (standard_rate !== undefined)
       updates.standard_rate = Number(standard_rate);
+    if (applied_rate !== undefined)
+      updates.applied_rate =
+        applied_rate === null ? null : Number(applied_rate);
     if (sample_fee !== undefined) updates.sample_fee = Number(sample_fee);
     if (h2_pop_fee !== undefined) updates.h2_pop_fee = Number(h2_pop_fee);
     if (spot_composite_fee !== undefined)
@@ -499,6 +503,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       spot_composite_fee,
     } = req.body || {};
 
+    // console.log(req.body);
     // Required core fields
     let companyId = company_id;
     if (isCustomerWithCompany(req)) companyId = Number(req.user.company_id);

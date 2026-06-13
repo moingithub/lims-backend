@@ -51,7 +51,7 @@ GET {{baseUrl}}/invoices
 Authorization: Bearer {{authToken}}
 
 ### Get Invoice by ID
-GET {{baseUrl}}/invoices/1
+GET {{baseUrl}}/invoices/4
 Authorization: Bearer {{authToken}}
 
 ### Update Invoice

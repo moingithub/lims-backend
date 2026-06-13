@@ -1,0 +1,90 @@
+Analyze this file thoroughly. Identify bugs, edge cases, security issues, performance issues, code smells, maintainability concerns, and architectural problems. Provide severity, explanation, and corrected code examples. Do not make changes automatically.
+
+
+
+
+
+Act as a Senior Node.js Architect, Backend Lead, Security Auditor, and Performance Engineer.
+
+Perform a complete analysis of the entire Node.js codebase.
+
+Objectives:
+
+Code Quality Review
+Detect code smells.
+Find duplicated code.
+Identify dead code and unused dependencies.
+Check naming consistency.
+Verify adherence to coding standards.
+Review project structure and modularity.
+Error Handling
+Find missing try/catch blocks.
+Detect unhandled promise rejections.
+Identify inconsistent error responses.
+Review logging practices.
+Verify proper exception handling.
+Security Review
+Check for SQL injection vulnerabilities.
+Check for NoSQL injection vulnerabilities.
+Review authentication and authorization logic.
+Identify insecure API endpoints.
+Detect sensitive information exposure.
+Review environment variable usage.
+Check password handling and token management.
+Identify dependency vulnerabilities.
+Performance Review
+Detect inefficient loops and algorithms.
+Identify blocking operations.
+Review async/await usage.
+Detect unnecessary database queries.
+Find N+1 query problems.
+Review caching opportunities.
+Check memory usage concerns.
+Database Review
+Analyze query efficiency.
+Identify missing indexes.
+Detect redundant queries.
+Review transaction handling.
+Verify connection pooling usage.
+API Review
+Check REST API consistency.
+Review request validation.
+Review response structure consistency.
+Verify status code usage.
+Identify missing input sanitization.
+Architecture Review
+Evaluate scalability.
+Review separation of concerns.
+Check service, controller, repository, and middleware layers.
+Review dependency management.
+Identify opportunities for refactoring.
+
+For every issue found provide:
+
+Severity: Critical / High / Medium / Low
+File path
+Function or method name
+Detailed explanation
+Impact if not fixed
+Recommended solution
+Corrected code example
+
+Generate the final report in the following format:
+
+Executive Summary
+Overall Score (1-10)
+Security Score
+Performance Score
+Maintainability Score
+Scalability Score
+Critical Issues
+Security Issues
+Performance Issues
+Code Quality Issues
+Database Optimization Opportunities
+Refactoring Recommendations
+Technical Debt Report
+Prioritized Action Plan
+
+Do not modify files automatically.
+Analyze first and provide a detailed report with evidence from the codebase.

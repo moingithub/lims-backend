@@ -1,8 +1,24 @@
 const express = require("express");
 const { prisma, prismaErrorDetail } = require("../lib/common");
 const authorize = require("../middleware/authorize");
+const logger = require("../lib/logger");
 
 const router = express.Router();
+
+function parseMoneyField(value, fieldName) {
+  if (value === null || value === undefined || value === "") {
+    const err = new Error(`${fieldName} is required`);
+    err.status = 400;
+    throw err;
+  }
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) {
+    const err = new Error(`Invalid ${fieldName}`);
+    err.status = 400;
+    throw err;
+  }
+  return num;
+}
 
 // List analysis pricing
 router.get("/", async (req, res) => {
@@ -47,38 +63,37 @@ router.post("/", authorize("analysis_pricing"), async (req, res) => {
       active,
     } = req.body || {};
 
-    if (
-      !analysis_type ||
-      standard_rate == null ||
-      rushed_rate == null ||
-      sample_fee == null
-    ) {
-      return res.status(400).json({
-        error:
-          "analysis_type, standard_rate, rushed_rate and sample_fee are required",
-      });
+    const trimmedType = String(analysis_type || "").trim();
+    if (!trimmedType) {
+      return res.status(400).json({ error: "analysis_type is required" });
     }
 
     const created = await prisma.analysis_pricing.create({
       data: {
-        analysis_type,
-        description: description ?? null,
-        standard_rate: standard_rate,
-        rushed_rate: rushed_rate,
-        sample_fee: sample_fee,
+        analysis_type: trimmedType,
+        description: description?.trim() ? description.trim() : null,
+        standard_rate: parseMoneyField(standard_rate, "standard_rate"),
+        rushed_rate: parseMoneyField(rushed_rate, "rushed_rate"),
+        sample_fee: parseMoneyField(sample_fee, "sample_fee"),
         active: typeof active === "boolean" ? active : true,
-        created_by:
-          req.user && req.user.userId
-            ? { connect: { id: Number(req.user.userId) } }
-            : undefined,
+        created_by_id: Number(req.user.userId),
       },
     });
     return res.status(201).json(created);
   } catch (err) {
-    if (err && err.code === "P2002")
+    if (err && err.status === 400) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err && err.code === "P2002") {
       return res.status(400).json({ error: "analysis_type must be unique" });
+    }
     const detail = prismaErrorDetail(err);
     if (detail) return res.status(400).json({ error: detail });
+    logger.error("create analysis_pricing failed:", {
+      message: err?.message,
+      code: err?.code,
+      meta: err?.meta,
+    });
     return res.status(500).json({ error: "Failed to create analysis pricing" });
   }
 });
@@ -99,25 +114,55 @@ router.put("/:id", authorize("analysis_pricing"), async (req, res) => {
       active,
     } = req.body || {};
 
+    const updateData = {};
+    if (analysis_type !== undefined) {
+      const trimmedType = String(analysis_type).trim();
+      if (!trimmedType) {
+        return res.status(400).json({ error: "analysis_type is required" });
+      }
+      updateData.analysis_type = trimmedType;
+    }
+    if (description !== undefined) {
+      updateData.description = description?.trim() ? description.trim() : null;
+    }
+    if (standard_rate !== undefined) {
+      updateData.standard_rate = parseMoneyField(
+        standard_rate,
+        "standard_rate",
+      );
+    }
+    if (rushed_rate !== undefined) {
+      updateData.rushed_rate = parseMoneyField(rushed_rate, "rushed_rate");
+    }
+    if (sample_fee !== undefined) {
+      updateData.sample_fee = parseMoneyField(sample_fee, "sample_fee");
+    }
+    if (active !== undefined) {
+      updateData.active = Boolean(active);
+    }
+
     const updated = await prisma.analysis_pricing.update({
       where: { id },
-      data: {
-        ...(analysis_type !== undefined ? { analysis_type } : {}),
-        ...(description !== undefined ? { description } : {}),
-        ...(standard_rate !== undefined ? { standard_rate } : {}),
-        ...(rushed_rate !== undefined ? { rushed_rate } : {}),
-        ...(sample_fee !== undefined ? { sample_fee } : {}),
-        ...(active !== undefined ? { active: Boolean(active) } : {}),
-      },
+      data: updateData,
     });
     return res.json(updated);
   } catch (err) {
-    if (err && err.code === "P2002")
+    if (err && err.status === 400) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err && err.code === "P2002") {
       return res.status(400).json({ error: "analysis_type must be unique" });
-    if (err && err.code === "P2025")
+    }
+    if (err && err.code === "P2025") {
       return res.status(404).json({ error: "Analysis pricing not found" });
+    }
     const detail = prismaErrorDetail(err);
     if (detail) return res.status(400).json({ error: detail });
+    logger.error("update analysis_pricing failed:", {
+      message: err?.message,
+      code: err?.code,
+      meta: err?.meta,
+    });
     return res.status(500).json({ error: "Failed to update analysis pricing" });
   }
 });

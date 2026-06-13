@@ -25,9 +25,10 @@ router.get("/", (req, res) => {
   res.json({ message: "LIMS API is running", version: "1.0.0" });
 });
 
-// Serve uploaded OCR files directly at /api/uploads/ocr
+// Serve uploaded OCR files directly at /api/uploads/ocr (authenticated only)
 router.use(
   "/uploads/ocr",
+  jwtAuth,
   express.static(path.join(__dirname, "..", "..", "uploads", "ocr")),
 );
 

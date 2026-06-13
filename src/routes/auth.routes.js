@@ -38,7 +38,7 @@ router.post("/login", async (req, res) => {
     delete safeUser.password;
 
     // Sign a JWT token. Use environment variable JWT_SECRET in production.
-    const JWT_SECRET = process.env.JWT_SECRET || "dev_jwt_secret";
+    const JWT_SECRET = process.env.JWT_SECRET;
     // include company_id (if present) so clients can have it; server jwtAuth will still re-load from DB
     const tokenPayload = {
       userId: user.id,

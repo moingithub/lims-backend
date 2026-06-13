@@ -14,8 +14,8 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "name": "Moin Ansari",
-  "email": "moin@esoftech.com",
+  "name": "Moin Ansari32",
+  "email": "moin32@esoftech.com",
   "password": "securepassword", 
   "role_id": 2,
   "company_id": 2,

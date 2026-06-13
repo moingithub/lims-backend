@@ -24,7 +24,6 @@ Content-Type: application/json
   "hourly_fee": 20.00,
   "miles": 100.00,
   "rate_per_mile": 0.50,
-  "created_by_id": 1,
   "status": "Pending"
 }
 
@@ -42,7 +41,6 @@ Content-Type: application/json
   "miles": 50.00,
   "rate_per_mile": 0.50,
   "cylinders":2,
-  "created_by_id": 1,
   "status": "Submitted"
 }
 

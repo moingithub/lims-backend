@@ -48,6 +48,8 @@ router.post("/", async (req, res) => {
 
   try {
     const invoice_number = await generateInvoiceNumber();
+    const createdById =
+      req.user && req.user.userId ? Number(req.user.userId) : null;
 
     const invoice = await prisma.invoice_headers.create({
       data: {
@@ -71,6 +73,7 @@ router.post("/", async (req, res) => {
         total_amount,
         status,
         payment_status,
+        created_by_id: createdById,
         invoiceLines: {
           create: invoiceLines.map((line) => ({
             sample_checkin_id: line.sample_checkin_id,
@@ -84,6 +87,7 @@ router.post("/", async (req, res) => {
             quantity: line.quantity,
             unit_price: line.unit_price,
             amount: line.amount,
+            created_by_id: createdById,
           })),
         },
       },
@@ -114,7 +118,7 @@ router.post("/", async (req, res) => {
 router.get("/list", async (req, res) => {
   try {
     const invoices = await prisma.invoice_list.findMany({
-      orderBy: { invoice_date: "desc" },
+      orderBy: { invoice_number: "desc" },
     });
     res.json(invoices);
   } catch (err) {
@@ -211,6 +215,9 @@ router.put("/:id", async (req, res) => {
   } = req.body;
 
   try {
+    const createdById =
+      req.user && req.user.userId ? Number(req.user.userId) : null;
+
     const existing = await prisma.invoice_headers.findUnique({
       where: { id },
       select: { payment_status: true },
@@ -285,6 +292,7 @@ router.put("/:id", async (req, res) => {
               quantity: line.quantity,
               unit_price: line.unit_price,
               amount: line.amount,
+              created_by_id: createdById,
             },
           });
         }

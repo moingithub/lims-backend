@@ -52,7 +52,7 @@ module.exports = async function (req, res, next) {
     token = token.slice(1, -1);
   }
 
-  const JWT_SECRET = process.env.JWT_SECRET || "dev_jwt_secret";
+  const JWT_SECRET = process.env.JWT_SECRET;
   try {
     const payload = jwt.verify(token, JWT_SECRET);
 

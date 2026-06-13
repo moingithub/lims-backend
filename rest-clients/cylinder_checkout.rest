@@ -17,9 +17,9 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "cylinder_id": 2,
-  "company_id": 1,
-  "company_contact_id": 1,
+  "cylinder_id": 1,
+  "company_id": 2,
+  "company_contact_id": 2,
   "is_returned": false
 }
 

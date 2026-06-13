@@ -27,19 +27,19 @@ POST {{baseUrl}}/sample_checkin/ocr
 Authorization: Bearer {{authToken}}
 
 
-###
-POST {{baseUrl}}/sample_checkin/ocr
-Authorization: Bearer {{authToken}}
-Content-Type: multipart/form-data; boundary=----FormBoundary
+# ###
+# POST {{baseUrl}}/sample_checkin/ocr
+# Authorization: Bearer {{authToken}}
+# Content-Type: multipart/form-data; boundary=----FormBoundary
 
-------FormBoundary
-Content-Disposition: form-data; name="file"; filename="ORC-Image.PNG"
-Content-Type: image/png
+# ------FormBoundary
+# Content-Disposition: form-data; name="file"; filename="ORC-Image.PNG"
+# Content-Type: image/png
 
-# < D:\Projects\LIMS-Backend\uploads\ocr\1777547931002-Sample-ORC-Image.PNG
-< D:\Projects\LIMS-Backend\uploads/ocr/IMG_8504.jpeg
+# # < D:\Projects\LIMS-Backend\uploads\ocr\1777547931002-Sample-ORC-Image.PNG
+# < D:\Projects\LIMS-Backend\uploads/ocr/IMG_8504.jpeg
 
-------FormBoundary--
+# ------FormBoundary--
 
 ### OCR By Gemini
 POST {{baseUrl}}/sample_checkin/ocr_ai
@@ -50,7 +50,7 @@ Content-Type: multipart/form-data; boundary=----FormBoundary
 Content-Disposition: form-data; name="file"; filename="ORC-Image.PNG"
 Content-Type: image/png
 
-< d:\Projects\LIMS-Docs\OCR Images\IMG_8506.jpeg
+< D:\Projects\LIMS-Backend\uploads/ocr/IMG_8504.jpeg
 
 ------FormBoundary--
 
@@ -61,8 +61,8 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "company_id": 3,
-  "company_contact_id": 5,
+  "company_id": 2,
+  "company_contact_id": 2,
   "analysis_type_id": 1,
   "area_id": 2,
   "customer_cylinder": false,
@@ -107,22 +107,22 @@ Content-Type: application/json
 }
 
 ### Delete sample check-in
-DELETE {{baseUrl}}/sample_checkin/6
+DELETE {{baseUrl}}/sample_checkin/2
 Authorization: Bearer {{authToken}}
 
 ### Update sample_checkin work order lines
-PUT {{baseUrl}}/sample_checkin/update_wo_lines/16
+PUT {{baseUrl}}/sample_checkin/update_wo_lines/14
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
   "analysis_type_id": 1,
   "rushed": true,
-  "standard_rate": 450.00,
-  "applied_rate": 400.00,
-  "sample_fee": 520.00,
-  "h2_pop_fee": 220.00,
-  "spot_composite_fee": 430.00
+  "standard_rate": 100.00,
+  "applied_rate": 200.00,
+  "sample_fee": 100.00,
+  "h2_pop_fee": 100.00,
+  "spot_composite_fee": 100.00
 }
 
 ### Update status by work order number (URL param)

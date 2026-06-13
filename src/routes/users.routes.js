@@ -83,6 +83,19 @@ router.post("/", authorize("users"), async (req, res) => {
     const role = await prisma.roles.findUnique({ where: { id: roleId } });
     if (!role) return res.status(400).json({ error: "role_id does not exist" });
 
+    // Privilege-escalation guard: only admins may create users with the admin role
+    const requesterIsAdmin =
+      req.user &&
+      typeof req.user.role === "string" &&
+      String(req.user.role).trim().toLowerCase() === "admin";
+    const targetRoleIsAdmin =
+      !!role.name && String(role.name).trim().toLowerCase() === "admin";
+    if (targetRoleIsAdmin && !requesterIsAdmin) {
+      return res
+        .status(403)
+        .json({ error: "Only admins can assign the admin role" });
+    }
+
     const SALT_ROUNDS = 10;
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
@@ -121,7 +134,7 @@ router.post("/", authorize("users"), async (req, res) => {
     const created = await prisma.users.create({
       data: {
         ...data,
-        created_by_id: Number(req.user.userId),
+        created_by: { connect: { id: Number(req.user.userId) } },
       },
     });
 
@@ -142,6 +155,7 @@ router.post("/", authorize("users"), async (req, res) => {
       return res.status(400).json({ error: "Unique constraint violated" });
     }
     const detail = prismaErrorDetail(error);
+    console.log("ERR", error);
     if (detail) return res.status(400).json({ error: detail });
     return res.status(500).json({ error: "Failed to create user" });
   }
@@ -175,6 +189,30 @@ router.put("/:id", authorize("users"), async (req, res) => {
       const role = await prisma.roles.findUnique({ where: { id: roleId } });
       if (!role)
         return res.status(400).json({ error: "role_id does not exist" });
+
+      // Privilege-escalation guards
+      const requesterIsAdminForRole =
+        req.user &&
+        typeof req.user.role === "string" &&
+        String(req.user.role).trim().toLowerCase() === "admin";
+      const targetRoleIsAdmin =
+        !!role.name && String(role.name).trim().toLowerCase() === "admin";
+      // Only admins may grant the admin role
+      if (targetRoleIsAdmin && !requesterIsAdminForRole) {
+        return res
+          .status(403)
+          .json({ error: "Only admins can assign the admin role" });
+      }
+      // Non-admins cannot change their own role (prevents self-escalation)
+      if (
+        !requesterIsAdminForRole &&
+        Number(id) === Number(req.user.userId) &&
+        Number(role_id) !== Number(existing.role_id)
+      ) {
+        return res
+          .status(403)
+          .json({ error: "You cannot change your own role" });
+      }
     }
 
     // Prevent non-admin from changing admin user's sensitive fields; keep password restriction

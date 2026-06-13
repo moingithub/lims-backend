@@ -20,9 +20,6 @@ router.put("/by-number/:work_order_number", async (req, res) => {
       miles,
       rate_per_mile,
       status,
-      created_by_id,
-      created_at,
-      updated_at,
     } = req.body;
 
     // Validate new work_order_number exists in sample_checkin if updating
@@ -54,9 +51,6 @@ router.put("/by-number/:work_order_number", async (req, res) => {
         miles,
         rate_per_mile,
         status,
-        created_by_id,
-        created_at,
-        updated_at,
       },
     });
     res.json(updated);
@@ -222,6 +216,10 @@ router.get("/:id", async (req, res) => {
 // Create workorder_header
 router.post("/", async (req, res) => {
   try {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ error: "Unauthenticated" });
+    }
+
     const {
       company_id,
       work_order_date,
@@ -233,9 +231,6 @@ router.post("/", async (req, res) => {
       miles,
       rate_per_mile,
       status,
-      created_by_id,
-      created_at,
-      updated_at,
     } = req.body;
 
     // Validate work_order_number exists in sample_checkin
@@ -261,9 +256,7 @@ router.post("/", async (req, res) => {
         miles,
         rate_per_mile,
         status,
-        created_by_id,
-        created_at,
-        updated_at,
+        created_by_id: Number(req.user.userId),
       },
     });
     res.status(201).json(created);
@@ -302,9 +295,6 @@ router.put("/:id", async (req, res) => {
       miles,
       rate_per_mile,
       status,
-      created_by_id,
-      created_at,
-      updated_at,
     } = req.body;
 
     // Validate work_order_number exists in sample_checkin
@@ -333,9 +323,6 @@ router.put("/:id", async (req, res) => {
         miles,
         rate_per_mile,
         status,
-        created_by_id,
-        created_at,
-        updated_at,
       },
     });
     res.json(updated);

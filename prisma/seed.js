@@ -299,7 +299,7 @@ async function main() {
             company_id: companyId,
             company_contact_id: contactJohn.id,
             is_returned: false,
-            created_by: { connect: { id: adminUser.id } },
+            created_by_id: adminUser.id,
           },
         });
       }

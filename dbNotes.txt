@@ -9,11 +9,13 @@ npx prisma db seed
 or
 node prisma/seed.js
 
--- To Update new Fields--
-npx prisma migrate dev --name add_pop_fee_fields
-
 
 --------For API Update----------------
+1. Open fileZilla
+2. Connect Using credentials
+3.
+
+
 -- How to upload changes in production
 sudo pm2 list
 -- Assume 0 is the API
@@ -23,7 +25,20 @@ upload changes from fileZilla ( Do not upload node_modules)
 npm install
 sudo pm2 start 0
 
+-----------------------------------------------
+-- To Update new Fields--
+npx prisma migrate dev --name add_pop_fee_fields
+
 --- In User company_id is not saved. Need to check that
 
 For views, create view in db and then exectue the folowing in terminal. This will pull the view in prisma
 npx prisma db pull
+
+-- For deployment---
+
+Add/Execute these to your deploy pipeline so code and DB never drift again:
+
+npm install
+npx prisma generate
+npx prisma migrate deploy
+# then (re)start the app

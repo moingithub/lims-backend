@@ -169,7 +169,7 @@ CREATE TABLE "sample_checkin" (
     "sample_type" TEXT NOT NULL,
     "flow_rate" TEXT,
     "pressure" TEXT,
-    "pressure_unit" TEXT NOT NULL,
+    "pressure_unit" TEXT,
     "temperature" TEXT,
     "field_h2s" TEXT,
     "cost_code" TEXT,
@@ -233,7 +233,9 @@ CREATE TABLE "invoice_headers" (
     "status" TEXT NOT NULL DEFAULT 'draft',
     "payment_status" TEXT NOT NULL DEFAULT 'Pending',
     "authorized_by" TEXT,
+    "created_by_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "invoice_headers_pkey" PRIMARY KEY ("id")
 );
@@ -251,6 +253,9 @@ CREATE TABLE "invoice_lines" (
     "quantity" DECIMAL(12,2),
     "unit_price" DECIMAL(12,2),
     "amount" DECIMAL(12,2),
+    "created_by_id" INTEGER,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "invoice_lines_pkey" PRIMARY KEY ("id")
 );
@@ -259,22 +264,55 @@ CREATE TABLE "invoice_lines" (
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
+CREATE INDEX "users_role_id_idx" ON "users"("role_id");
+
+-- CreateIndex
+CREATE INDEX "users_company_id_idx" ON "users"("company_id");
+
+-- CreateIndex
+CREATE INDEX "users_created_by_id_idx" ON "users"("created_by_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "companies_code_key" ON "companies"("code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "companies_name_key" ON "companies"("name");
 
 -- CreateIndex
+CREATE INDEX "companies_created_by_id_idx" ON "companies"("created_by_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "roles_name_key" ON "roles"("name");
+
+-- CreateIndex
+CREATE INDEX "roles_created_by_id_idx" ON "roles"("created_by_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "modules_name_key" ON "modules"("name");
 
 -- CreateIndex
+CREATE INDEX "modules_created_by_id_idx" ON "modules"("created_by_id");
+
+-- CreateIndex
+CREATE INDEX "role_modules_module_id_idx" ON "role_modules"("module_id");
+
+-- CreateIndex
+CREATE INDEX "role_modules_created_by_id_idx" ON "role_modules"("created_by_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "role_modules_role_id_module_id_key" ON "role_modules"("role_id", "module_id");
 
 -- CreateIndex
+CREATE INDEX "company_areas_created_by_id_idx" ON "company_areas"("created_by_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "company_areas_company_id_area_key" ON "company_areas"("company_id", "area");
+
+-- CreateIndex
+CREATE INDEX "company_contacts_company_area_id_idx" ON "company_contacts"("company_area_id");
+
+-- CreateIndex
+CREATE INDEX "company_contacts_created_by_id_idx" ON "company_contacts"("created_by_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "company_contacts_company_id_name_key" ON "company_contacts"("company_id", "name");
@@ -283,7 +321,25 @@ CREATE UNIQUE INDEX "company_contacts_company_id_name_key" ON "company_contacts"
 CREATE UNIQUE INDEX "cylinders_cylinder_number_key" ON "cylinders"("cylinder_number");
 
 -- CreateIndex
+CREATE INDEX "cylinders_created_by_id_idx" ON "cylinders"("created_by_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "analysis_pricing_analysis_type_key" ON "analysis_pricing"("analysis_type");
+
+-- CreateIndex
+CREATE INDEX "analysis_pricing_created_by_id_idx" ON "analysis_pricing"("created_by_id");
+
+-- CreateIndex
+CREATE INDEX "cylinder_checkout_cylinder_id_idx" ON "cylinder_checkout"("cylinder_id");
+
+-- CreateIndex
+CREATE INDEX "cylinder_checkout_company_id_idx" ON "cylinder_checkout"("company_id");
+
+-- CreateIndex
+CREATE INDEX "cylinder_checkout_company_contact_id_idx" ON "cylinder_checkout"("company_contact_id");
+
+-- CreateIndex
+CREATE INDEX "cylinder_checkout_created_by_id_idx" ON "cylinder_checkout"("created_by_id");
 
 -- CreateIndex
 CREATE INDEX "cylinder_checkout_is_returned_idx" ON "cylinder_checkout"("is_returned");
@@ -295,13 +351,40 @@ CREATE UNIQUE INDEX "sample_checkin_analysis_number_key" ON "sample_checkin"("an
 CREATE INDEX "sample_checkin_company_id_idx" ON "sample_checkin"("company_id");
 
 -- CreateIndex
+CREATE INDEX "sample_checkin_company_contact_id_idx" ON "sample_checkin"("company_contact_id");
+
+-- CreateIndex
+CREATE INDEX "sample_checkin_analysis_type_id_idx" ON "sample_checkin"("analysis_type_id");
+
+-- CreateIndex
+CREATE INDEX "sample_checkin_area_id_idx" ON "sample_checkin"("area_id");
+
+-- CreateIndex
+CREATE INDEX "sample_checkin_cylinder_id_idx" ON "sample_checkin"("cylinder_id");
+
+-- CreateIndex
+CREATE INDEX "sample_checkin_created_by_id_idx" ON "sample_checkin"("created_by_id");
+
+-- CreateIndex
 CREATE INDEX "sample_checkin_status_idx" ON "sample_checkin"("status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "workorder_headers_work_order_number_key" ON "workorder_headers"("work_order_number");
 
 -- CreateIndex
+CREATE INDEX "workorder_headers_company_id_idx" ON "workorder_headers"("company_id");
+
+-- CreateIndex
+CREATE INDEX "workorder_headers_created_by_id_idx" ON "workorder_headers"("created_by_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "invoice_headers_invoice_number_key" ON "invoice_headers"("invoice_number");
+
+-- CreateIndex
+CREATE INDEX "invoice_headers_company_id_idx" ON "invoice_headers"("company_id");
+
+-- CreateIndex
+CREATE INDEX "invoice_headers_created_by_id_idx" ON "invoice_headers"("created_by_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "invoice_lines_sample_checkin_id_key" ON "invoice_lines"("sample_checkin_id");
@@ -312,11 +395,17 @@ CREATE UNIQUE INDEX "invoice_lines_analysis_number_key" ON "invoice_lines"("anal
 -- CreateIndex
 CREATE INDEX "invoice_lines_invoice_id_idx" ON "invoice_lines"("invoice_id");
 
+-- CreateIndex
+CREATE INDEX "invoice_lines_created_by_id_idx" ON "invoice_lines"("created_by_id");
+
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "users" ADD CONSTRAINT "users_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "users" ADD CONSTRAINT "users_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "companies" ADD CONSTRAINT "companies_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -337,7 +426,7 @@ ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_module_id_fkey" FOREIGN 
 ALTER TABLE "role_modules" ADD CONSTRAINT "role_modules_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "company_areas" ADD CONSTRAINT "company_areas_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "company_areas" ADD CONSTRAINT "company_areas_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "company_areas" ADD CONSTRAINT "company_areas_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -346,7 +435,7 @@ ALTER TABLE "company_areas" ADD CONSTRAINT "company_areas_created_by_id_fkey" FO
 ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_company_area_id_fkey" FOREIGN KEY ("company_area_id") REFERENCES "company_areas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -359,6 +448,15 @@ ALTER TABLE "analysis_pricing" ADD CONSTRAINT "analysis_pricing_created_by_id_fk
 
 -- AddForeignKey
 ALTER TABLE "cylinder_checkout" ADD CONSTRAINT "cylinder_checkout_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cylinder_checkout" ADD CONSTRAINT "cylinder_checkout_cylinder_id_fkey" FOREIGN KEY ("cylinder_id") REFERENCES "cylinders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cylinder_checkout" ADD CONSTRAINT "cylinder_checkout_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "cylinder_checkout" ADD CONSTRAINT "cylinder_checkout_company_contact_id_fkey" FOREIGN KEY ("company_contact_id") REFERENCES "company_contacts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_analysis_type_id_fkey" FOREIGN KEY ("analysis_type_id") REFERENCES "analysis_pricing"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -379,7 +477,7 @@ ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_created_by_id_fkey" 
 ALTER TABLE "sample_checkin" ADD CONSTRAINT "sample_checkin_cylinder_id_fkey" FOREIGN KEY ("cylinder_id") REFERENCES "cylinders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -388,7 +486,13 @@ ALTER TABLE "workorder_headers" ADD CONSTRAINT "workorder_headers_created_by_id_
 ALTER TABLE "invoice_headers" ADD CONSTRAINT "invoice_headers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "invoice_headers" ADD CONSTRAINT "invoice_headers_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_invoice_id_fkey" FOREIGN KEY ("invoice_id") REFERENCES "invoice_headers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_sample_checkin_id_fkey" FOREIGN KEY ("sample_checkin_id") REFERENCES "sample_checkin"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

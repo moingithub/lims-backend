@@ -157,10 +157,8 @@ router.post("/", authorize("cylinder_checkout"), async (req, res) => {
         company_contact_id: contactId,
         is_returned: isReturnedFlag,
         returned_at: returnedAtToUse,
-        created_by:
-          req.user && req.user.userId
-            ? { connect: { id: Number(req.user.userId) } }
-            : undefined,
+        created_by_id:
+          req.user && req.user.userId ? Number(req.user.userId) : undefined,
       },
     });
     return res.status(201).json(created);
