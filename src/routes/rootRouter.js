@@ -16,6 +16,7 @@ const sampleCheckinRouter = require("./sample_checkin.routes");
 const authRouter = require("./auth.routes");
 const cylinderInventoryRouter = require("./cylinder_inventory.routes");
 const invoicesRouter = require("./invoices.routes");
+const importMachineReportsRouter = require("./import_machine_reports.routes");
 const jwtAuth = require("../middleware/jwtAuth");
 const authorize = require("../middleware/authorize");
 
@@ -50,6 +51,7 @@ router.use("/sample_checkin", jwtAuth, sampleCheckinRouter);
 router.use("/workorder_headers", jwtAuth, workorderHeadersRouter);
 router.use("/cylinder_inventory", jwtAuth, cylinderInventoryRouter);
 router.use("/invoices", jwtAuth, invoicesRouter);
+router.use("/import_machine_reports", jwtAuth, importMachineReportsRouter);
 router.use("/auth", authRouter);
 
 module.exports = router;

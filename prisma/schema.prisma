@@ -9,33 +9,34 @@ datasource db {
 }
 
 model users {
-  id                 Int                 @id @default(autoincrement())
-  name               String
-  email              String              @unique
-  password           String
-  role_id            Int?
-  company_id         Int?
-  active             Boolean             @default(true)
-  created_by_id      Int?
-  created_at         DateTime            @default(now())
-  updated_at         DateTime            @updatedAt
-  analysisPricings   analysis_pricing[]
-  companies          companies[]
-  companyAreas       company_areas[]
-  companyContacts    company_contacts[]
-  cylinderCheckouts  cylinder_checkout[]
-  cylinders          cylinders[]
-  invoiceHeaders     invoice_headers[]
-  invoiceLines       invoice_lines[]
-  modules            modules[]
-  roleModules        role_modules[]
-  roles              roles[]
-  sampleCheckins     sample_checkin[]
-  company            companies?          @relation("CompanyUsers", fields: [company_id], references: [id])
-  role               roles?              @relation("RoleUsers", fields: [role_id], references: [id])
-  created_by         users?              @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: Restrict)
-  created_users      users[]             @relation("UserCreatedBy")
-  workorders_created workorder_headers[]
+  id                   Int                      @id @default(autoincrement())
+  name                 String
+  email                String                   @unique
+  password             String
+  role_id              Int?
+  company_id           Int?
+  active               Boolean                  @default(true)
+  created_by_id        Int?
+  created_at           DateTime                 @default(now())
+  updated_at           DateTime                 @updatedAt
+  analysisPricings     analysis_pricing[]
+  companies            companies[]
+  companyAreas         company_areas[]
+  companyContacts      company_contacts[]
+  cylinderCheckouts    cylinder_checkout[]
+  cylinders            cylinders[]
+  invoiceHeaders       invoice_headers[]
+  invoiceLines         invoice_lines[]
+  importMachineReports import_machine_reports[]
+  modules              modules[]
+  roleModules          role_modules[]
+  roles                roles[]
+  sampleCheckins       sample_checkin[]
+  company              companies?               @relation("CompanyUsers", fields: [company_id], references: [id])
+  role                 roles?                   @relation("RoleUsers", fields: [role_id], references: [id])
+  created_by           users?                   @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: Restrict)
+  created_users        users[]                  @relation("UserCreatedBy")
+  workorders_created   workorder_headers[]
 
   @@index([role_id])
   @@index([company_id])
@@ -224,6 +225,7 @@ model sample_checkin {
   cylinder_id        Int?
   cylinder_number    String?
   analysis_number    String           @unique
+  analysis_position  Int?
   producer           String?
   well_name          String?
   meter_number       String?
@@ -257,6 +259,7 @@ model sample_checkin {
   created_by         users            @relation(fields: [created_by_id], references: [id])
   cylinder           cylinders?       @relation(fields: [cylinder_id], references: [id], onDelete: Restrict)
 
+  @@unique([work_order_number, analysis_position])
   @@index([company_id])
   @@index([company_contact_id])
   @@index([analysis_type_id])
@@ -342,6 +345,46 @@ model invoice_lines {
   @@index([created_by_id])
 }
 
+model import_machine_reports {
+  id               Int                      @id @default(autoincrement())
+  import_id        String                   @unique
+  source_machine   String
+  status           String                   @default("Imported")
+  file_name        String
+  stored_file_name String
+  method_name      String?
+  created_by_id    Int
+  created_at       DateTime                 @default(now())
+  updated_at       DateTime                 @updatedAt
+  created_by       users                    @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
+  results          machine_report_results[]
+
+  @@index([created_by_id])
+  @@index([status])
+}
+
+model machine_report_results {
+  id                       Int                    @id @default(autoincrement())
+  import_machine_report_id Int
+  analysis_position        Int
+  sample_time              DateTime?
+  sample_name              String?
+  detector_module          String
+  component                String
+  method_name              String?
+  rt_s                     Decimal?               @db.Decimal(12, 6)
+  area                     Decimal?               @db.Decimal(18, 6)
+  normalized_concentration Decimal?               @db.Decimal(18, 12)
+  concentration            Decimal?               @db.Decimal(18, 12)
+  created_at               DateTime               @default(now())
+  import_machine_report    import_machine_reports @relation(fields: [import_machine_report_id], references: [id], onDelete: Cascade)
+
+  @@unique([import_machine_report_id, analysis_position, detector_module, component])
+  @@index([import_machine_report_id])
+  @@index([analysis_position])
+  @@index([component])
+}
+
 view open_checkout {
   id              Int?      @unique
   company_name    String?
@@ -361,3 +404,15 @@ view invoice_list {
   amount         Decimal?  @db.Decimal(12, 2)
   payment_status String?
 }
+
+view sample_analysis_position {
+  sample_checkin_id Int?    @unique
+  company_name      String?
+  work_order_number String?
+  cylinder_number   String?
+  analysis_number   String?
+  status            String?
+  analysis_position Int?
+}
+
+

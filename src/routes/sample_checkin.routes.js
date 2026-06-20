@@ -442,6 +442,79 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
   }
 });
 
+// List sample analysis positions from view
+router.get("/analysis_positions", async (req, res) => {
+  try {
+    const where = {};
+    if (isCustomerWithCompany(req)) {
+      const company = await prisma.companies.findUnique({
+        where: { id: Number(req.user.company_id) },
+        select: { name: true },
+      });
+      if (!company) return res.json([]);
+      where.company_name = company.name;
+    }
+    if (req.query.work_order_number) {
+      where.work_order_number = String(req.query.work_order_number);
+    }
+    if (req.query.status) where.status = String(req.query.status);
+    if (req.query.sample_checkin_id !== undefined) {
+      const id = Number(req.query.sample_checkin_id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: "Invalid sample_checkin_id" });
+      }
+      where.sample_checkin_id = id;
+    }
+    if (req.query.analysis_position !== undefined) {
+      const pos = Number(req.query.analysis_position);
+      if (!Number.isInteger(pos) || pos <= 0) {
+        return res.status(400).json({ error: "Invalid analysis_position" });
+      }
+      where.analysis_position = pos;
+    }
+
+    const list = await prisma.sample_analysis_position.findMany({
+      where,
+      orderBy: [{ work_order_number: "asc" }, { analysis_position: "asc" }],
+    });
+    return res.json(list);
+  } catch (err) {
+    return res.status(500).json({
+      error: "Failed to fetch sample analysis positions",
+      detail: err.message,
+    });
+  }
+});
+
+// Get sample analysis position by sample_checkin_id from view
+router.get("/analysis_positions/:sample_checkin_id", async (req, res) => {
+  const sample_checkin_id = Number(req.params.sample_checkin_id);
+  if (!Number.isInteger(sample_checkin_id) || sample_checkin_id <= 0) {
+    return res.status(400).json({ error: "Invalid sample_checkin_id" });
+  }
+  try {
+    const where = { sample_checkin_id };
+    if (isCustomerWithCompany(req)) {
+      const company = await prisma.companies.findUnique({
+        where: { id: Number(req.user.company_id) },
+        select: { name: true },
+      });
+      if (!company) return res.status(404).json({ error: "Record not found" });
+      where.company_name = company.name;
+    }
+
+    const item = await prisma.sample_analysis_position.findFirst({ where });
+    if (!item)
+      return res.status(404).json({ error: "Sample analysis position not found" });
+    return res.json(item);
+  } catch (err) {
+    return res.status(500).json({
+      error: "Failed to fetch sample analysis position",
+      detail: err.message,
+    });
+  }
+});
+
 // Get by id
 router.get("/:id", async (req, res) => {
   const id = Number(req.params.id);
@@ -735,6 +808,69 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
   }
 });
 
+// Update analysis_position only (no other field validation)
+router.put(
+  "/update_analysis_position/:id",
+  authorize("sample_checkin"),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0)
+      return res.status(400).json({ error: "Invalid id" });
+
+    const { analysis_position } = req.body || {};
+    if (analysis_position === undefined) {
+      return res.status(400).json({ error: "analysis_position is required" });
+    }
+
+    let value;
+    if (analysis_position === null) {
+      value = null;
+    } else {
+      const pos = Number(analysis_position);
+      if (!Number.isInteger(pos) || pos <= 0) {
+        return res.status(400).json({ error: "Invalid analysis_position" });
+      }
+      value = pos;
+    }
+
+    try {
+      const existing = await prisma.sample_checkin.findUnique({ where: { id } });
+      if (!existing)
+        return res.status(404).json({ error: "Sample check-in not found" });
+      if (isCustomerWithCompany(req)) {
+        if (Number(existing.company_id) !== Number(req.user.company_id))
+          return res.status(403).json({ error: "Forbidden" });
+      }
+
+      const updated = await prisma.sample_checkin.update({
+        where: { id },
+        data: { analysis_position: value },
+      });
+      return res.json(updated);
+    } catch (err) {
+      if (err && err.code === "P2002") {
+        const target = (err.meta && err.meta.target) || [];
+        const tarr = Array.isArray(target) ? target : [target];
+        if (
+          tarr.some((t) => String(t).toLowerCase() === "work_order_number") &&
+          tarr.some((t) => String(t).toLowerCase() === "analysis_position")
+        ) {
+          return res.status(400).json({
+            error: "Duplicate analysis_position for this work_order_number",
+          });
+        }
+      }
+      if (err && err.code === "P2025")
+        return res.status(404).json({ error: "Sample check-in not found" });
+      const detail = prismaErrorDetail(err);
+      if (detail) return res.status(400).json({ error: detail });
+      return res
+        .status(500)
+        .json({ error: "Failed to update analysis_position" });
+    }
+  },
+);
+
 // Update sample check-in
 router.put("/:id", authorize("sample_checkin"), async (req, res) => {
   const id = Number(req.params.id);
@@ -777,6 +913,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       remarks,
       scanned_tag_image,
       work_order_number,
+      analysis_position,
       status,
       standard_rate,
       applied_rate,
@@ -976,6 +1113,17 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       updates.scanned_tag_image = scanned_tag_image ?? null;
     if (work_order_number !== undefined)
       updates.work_order_number = work_order_number ?? null;
+    if (analysis_position !== undefined) {
+      if (analysis_position === null) {
+        updates.analysis_position = null;
+      } else {
+        const pos = Number(analysis_position);
+        if (!Number.isInteger(pos) || pos <= 0) {
+          return res.status(400).json({ error: "Invalid analysis_position" });
+        }
+        updates.analysis_position = pos;
+      }
+    }
     if (status !== undefined) updates.status = String(status);
     if (standard_rate !== undefined)
       updates.standard_rate =
@@ -998,6 +1146,22 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
     return res.json(updated);
   } catch (err) {
     if (err && err.code === "P2002") {
+      const target = (err.meta && err.meta.target) || [];
+      const tarr = Array.isArray(target) ? target : [target];
+      if (
+        tarr.some((t) => String(t).toLowerCase() === "analysis_number")
+      ) {
+        return res.status(400).json({ error: "Duplicate analysis_number" });
+      }
+      if (
+        tarr.some((t) => String(t).toLowerCase() === "work_order_number") &&
+        tarr.some((t) => String(t).toLowerCase() === "analysis_position")
+      ) {
+        return res.status(400).json({
+          error:
+            "Duplicate analysis_position for this work_order_number",
+        });
+      }
       return res.status(400).json({ error: "Duplicate analysis_number" });
     }
     if (err && err.code === "P2025")

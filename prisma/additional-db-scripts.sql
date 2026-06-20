@@ -70,3 +70,15 @@ FROM
 invoice_headers ih
 LEFT JOIN companies comp 
     ON ih.company_id = comp.id
+
+--------------------------------------------------
+
+CREATE VIEW sample_analysis_position AS
+SELECT sample_checkin.id AS "sample_checkin_id", 
+companies.name AS "company_name",
+Work_order_number, 
+cylinder_number, 
+analysis_number, 
+status, 
+analysis_position 
+FROM sample_checkin INNER JOIN companies ON sample_checkin.company_id=companies.id

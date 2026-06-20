@@ -18,6 +18,18 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/sample_checkin/workorders/by-number/WO-004169
 Authorization: Bearer {{authToken}}
 
+### List sample analysis positions (view)
+GET {{baseUrl}}/sample_checkin/analysis_positions
+Authorization: Bearer {{authToken}}
+
+### List sample analysis positions (filter by work order)
+GET {{baseUrl}}/sample_checkin/analysis_positions?work_order_number=WO-501349
+Authorization: Bearer {{authToken}}
+
+### Get sample analysis position by sample_checkin_id (view)
+GET {{baseUrl}}/sample_checkin/analysis_positions/1
+Authorization: Bearer {{authToken}}
+
 ### Get sample check-in by id
 GET {{baseUrl}}/sample_checkin/2
 Authorization: Bearer {{authToken}}
@@ -105,6 +117,16 @@ Content-Type: application/json
   "status": "Completed",
   "remarks": "Updated via API"
 }
+
+### Update sample check-in analysis_position
+PUT {{baseUrl}}/sample_checkin/update_analysis_position/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "analysis_position": 9
+}
+
 
 ### Delete sample check-in
 DELETE {{baseUrl}}/sample_checkin/2
