@@ -24,7 +24,7 @@ Special field rules:
 - Flow_Rate: ignore any MCFD text and return only the numeric flow rate value.
 - Pressure: do not include psia or psig in Pressure. Pressure must be numeric only.
 - Pressure_Unit: if the original pressure text includes psia or psig, place exactly one of those values here.
-- Temperature: do not include F. Return only the numeric temperature value.
+- Field_H2S: return only the numeric H2S value. Do not include ppm or other units.
 Return STRICT JSON only.
 Schema:
 {
@@ -111,6 +111,10 @@ function normalizeOcrOutput(parsedJson) {
 
   if (normalized.Temperature !== undefined) {
     normalized.Temperature = normalizeTemperature(normalized.Temperature);
+  }
+
+  if (normalized.Field_H2S !== undefined) {
+    normalized.Field_H2S = normalizeNumberOnly(normalized.Field_H2S);
   }
 
   if (normalized.Pressure_Unit !== undefined) {

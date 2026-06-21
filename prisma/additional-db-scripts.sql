@@ -69,7 +69,7 @@ ih.payment_status
 FROM
 invoice_headers ih
 LEFT JOIN companies comp 
-    ON ih.company_id = comp.id
+    ON ih.company_id = comp.id;
 
 --------------------------------------------------
 

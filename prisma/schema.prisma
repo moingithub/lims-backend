@@ -140,8 +140,8 @@ model company_contacts {
   company_id        Int
   company_area_id   Int?
   name              String
-  phone             String
-  email             String
+  phone             String?
+  email             String?
   active            Boolean             @default(true)
   created_by_id     Int
   created_at        DateTime            @default(now())
@@ -234,7 +234,7 @@ model sample_checkin {
   pressure           String?
   pressure_unit      String?
   temperature        String?
-  field_h2s          String?
+  field_h2s          Float                @default(0)
   cost_code          String?
   checkin_type       String
   invoice_ref_name   String?
@@ -376,6 +376,10 @@ model machine_report_results {
   area                     Decimal?               @db.Decimal(18, 6)
   normalized_concentration Decimal?               @db.Decimal(18, 12)
   concentration            Decimal?               @db.Decimal(18, 12)
+  normalized               Decimal?               @db.Decimal(18, 4)
+  mol_pct                  Decimal?               @db.Decimal(18, 4)
+  wt_pct                   Decimal?               @db.Decimal(18, 4)
+  gpm                      Decimal?               @db.Decimal(18, 4)
   created_at               DateTime               @default(now())
   import_machine_report    import_machine_reports @relation(fields: [import_machine_report_id], references: [id], onDelete: Cascade)
 
@@ -383,6 +387,23 @@ model machine_report_results {
   @@index([import_machine_report_id])
   @@index([analysis_position])
   @@index([component])
+}
+
+model gas_component_master {
+  component_id        Int      @id @default(autoincrement())
+  component_code      String   @unique @db.VarChar(10)
+  component_name      String   @db.VarChar(100)
+  chemical_formula    String?  @db.VarChar(50)
+  calculation_formula String?
+  comments            String?
+  display_order       Int
+  is_active           Boolean  @default(true)
+  molecular_weight    Decimal? @db.Decimal(8, 4)
+  has_gpm             Boolean  @default(false)
+  created_at          DateTime @default(now())
+
+  @@index([display_order])
+  @@index([is_active])
 }
 
 view open_checkout {

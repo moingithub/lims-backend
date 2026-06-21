@@ -1,0 +1,46 @@
+### List gas components
+GET {{baseUrl}}/gas_component_master
+Authorization: Bearer {{authToken}}
+
+### List active gas components only
+GET {{baseUrl}}/gas_component_master?active_only=true
+Authorization: Bearer {{authToken}}
+
+### Create gas component
+POST {{baseUrl}}/gas_component_master
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "component_code": "C1",
+  "component_name": "Methane",
+  "chemical_formula": "CH4",
+  "calculation_formula": null,
+  "comments": "Primary hydrocarbon component",
+  "display_order": 1,
+  "is_active": true,
+  "molecular_weight": 16.0430,
+  "has_gpm": false
+}
+
+### Get gas component by id
+GET {{baseUrl}}/gas_component_master/1
+Authorization: Bearer {{authToken}}
+
+### Update gas component
+PUT {{baseUrl}}/gas_component_master/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "component_name": "Methane (updated)",
+  "display_order": 2,
+  "is_active": true,
+  "molecular_weight": 16.0430,
+  "has_gpm": false,
+  "comments": "Updated comments"
+}
+
+### Delete gas component
+DELETE {{baseUrl}}/gas_component_master/1
+Authorization: Bearer {{authToken}}

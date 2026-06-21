@@ -64,10 +64,8 @@ router.post("/", authorize("company_contacts"), async (req, res) => {
     const { company_id, company_area_id, name, phone, email, active } =
       req.body || {};
 
-    if (!name || !phone || !email) {
-      return res
-        .status(400)
-        .json({ error: "name, phone and email are required" });
+    if (!name) {
+      return res.status(400).json({ error: "name is required" });
     }
 
     let companyIdToUse = company_id;
@@ -111,8 +109,8 @@ router.post("/", authorize("company_contacts"), async (req, res) => {
           ? { company_area: { connect: { id: Number(company_area_id) } } }
           : {}),
         name,
-        phone,
-        email,
+        phone: phone ?? null,
+        email: email ?? null,
         active: typeof active === "boolean" ? active : true,
         created_by:
           req.user && req.user.userId

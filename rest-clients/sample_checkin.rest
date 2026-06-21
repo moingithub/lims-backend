@@ -91,7 +91,7 @@ Content-Type: application/json
   "pressure": "100",
   "pressure_unit": "PSIA",
   "temperature": "25 C",
-  "field_h2s": "0 ppm",
+  "field_h2s": 0.0009,
   "cost_code": "CC-001",
   "checkin_type": "Bottle",
   "invoice_ref_name": "WO",

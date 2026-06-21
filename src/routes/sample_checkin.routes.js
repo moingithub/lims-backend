@@ -14,6 +14,18 @@ const {
 } = require("../lib/common");
 const authorize = require("../middleware/authorize");
 
+function parseOptionalFloat(value) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") {
+    const cleaned = value.trim().replace(/[^0-9.+\-]/g, "");
+    if (!cleaned) return null;
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : null;
+  }
+  return null;
+}
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: "uploads/ocr",
@@ -774,7 +786,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         pressure: pressure ?? null,
         pressure_unit: finalPressureUnit,
         temperature: temperature ?? null,
-        field_h2s: field_h2s ?? null,
+        field_h2s: parseOptionalFloat(field_h2s) ?? 0,
         cost_code: cost_code ?? null,
         checkin_type: finalCheckinType,
         invoice_ref_name: invoice_ref_name ?? null,
@@ -1080,7 +1092,9 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       updates.pressure_unit = finalPressureUnit;
     }
     if (temperature !== undefined) updates.temperature = temperature ?? null;
-    if (field_h2s !== undefined) updates.field_h2s = field_h2s ?? null;
+    if (field_h2s !== undefined) {
+      updates.field_h2s = parseOptionalFloat(field_h2s) ?? 0;
+    }
     if (cost_code !== undefined) updates.cost_code = cost_code ?? null;
     if (checkin_type !== undefined) {
       const allowedCheckinTypes =

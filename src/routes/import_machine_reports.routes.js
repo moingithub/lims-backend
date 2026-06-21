@@ -8,6 +8,12 @@ const {
   parseMachineReportJson,
   isJsonMachineReportFile,
 } = require("../lib/parseMachineReportJson");
+const {
+  buildComponentMasterMap,
+  buildFieldH2sByPosition,
+  prependH2sRows,
+  computeDerivedFields,
+} = require("../lib/computeMachineReportFields");
 
 const router = express.Router();
 
@@ -128,8 +134,32 @@ async function importMachineReportFromFile({
     });
 
     if (parsed?.results?.length) {
+      const positions = [
+        ...new Set(parsed.results.map((row) => row.analysis_position)),
+      ];
+      const checkins = await tx.sample_checkin.findMany({
+        where: { analysis_position: { in: positions } },
+        select: {
+          analysis_position: true,
+          field_h2s: true,
+          analysis_number: true,
+        },
+      });
+      const fieldH2sByPosition = buildFieldH2sByPosition(
+        checkins,
+        parsed.results,
+      );
+      const gasComponents = await tx.gas_component_master.findMany({
+        where: { is_active: true },
+      });
+      const componentMasterMap = buildComponentMasterMap(gasComponents);
+      const resultsWithH2s = prependH2sRows(parsed.results, fieldH2sByPosition);
+      const resultsWithDerived = computeDerivedFields(
+        resultsWithH2s,
+        componentMasterMap,
+      );
       await tx.machine_report_results.createMany({
-        data: parsed.results.map((row) => ({
+        data: resultsWithDerived.map((row) => ({
           import_machine_report_id: created.id,
           analysis_position: row.analysis_position,
           sample_time: row.sample_time,
@@ -141,6 +171,10 @@ async function importMachineReportFromFile({
           area: row.area,
           normalized_concentration: row.normalized_concentration,
           concentration: row.concentration,
+          normalized: row.normalized,
+          mol_pct: row.mol_pct,
+          wt_pct: row.wt_pct,
+          gpm: row.gpm,
         })),
       });
     }

@@ -48,11 +48,166 @@ const DEFAULT_MODULE_NAMES = [
   "company_master",
   "contacts",
   "import_machine_report",
+  "gas_component_master",
   "cylinder_inventory",
   "analysis_reports",
   "open_checkouts",
   "role_module",
 ];
+
+const DEFAULT_GAS_COMPONENTS = [
+  {
+    component_code: "H2S",
+    component_name: "Hydrogen Sulfide",
+    chemical_formula: "H2S",
+    calculation_formula: null,
+    comments: "Measured directly by GC.",
+    display_order: 1,
+    is_active: true,
+    molecular_weight: "34.0809",
+    has_gpm: false,
+  },
+  {
+    component_code: "O2",
+    component_name: "Oxygen",
+    chemical_formula: "O2",
+    calculation_formula: null,
+    comments: "Measured directly by GC.",
+    display_order: 2,
+    is_active: true,
+    molecular_weight: "31.9988",
+    has_gpm: false,
+  },
+  {
+    component_code: "N2",
+    component_name: "Nitrogen",
+    chemical_formula: "N2",
+    calculation_formula: null,
+    comments: "Measured directly by GC.",
+    display_order: 3,
+    is_active: true,
+    molecular_weight: "28.0135",
+    has_gpm: false,
+  },
+  {
+    component_code: "C1",
+    component_name: "Methane",
+    chemical_formula: "CH4",
+    calculation_formula: null,
+    comments: "Primary constituent of natural gas.",
+    display_order: 4,
+    is_active: true,
+    molecular_weight: "16.0425",
+    has_gpm: false,
+  },
+  {
+    component_code: "CO2",
+    component_name: "Carbon Dioxide",
+    chemical_formula: "CO2",
+    calculation_formula: null,
+    comments: "Measured directly by GC.",
+    display_order: 5,
+    is_active: true,
+    molecular_weight: "44.01",
+    has_gpm: false,
+  },
+  {
+    component_code: "C2",
+    component_name: "Ethane",
+    chemical_formula: "C2H6",
+    calculation_formula: null,
+    comments: "Measured directly by GC.",
+    display_order: 6,
+    is_active: true,
+    molecular_weight: "30.07",
+    has_gpm: true,
+  },
+  {
+    component_code: "C3",
+    component_name: "Propane",
+    chemical_formula: "C3H8",
+    calculation_formula: null,
+    comments: "Measured directly by GC.",
+    display_order: 7,
+    is_active: true,
+    molecular_weight: "44.097",
+    has_gpm: true,
+  },
+  {
+    component_code: "IC4",
+    component_name: "Isobutane",
+    chemical_formula: "C4H10",
+    calculation_formula: null,
+    comments: "Branched butane isomer.",
+    display_order: 8,
+    is_active: true,
+    molecular_weight: "58.123",
+    has_gpm: true,
+  },
+  {
+    component_code: "NC4",
+    component_name: "Normal Butane",
+    chemical_formula: "C4H10",
+    calculation_formula: null,
+    comments: "Straight-chain butane.",
+    display_order: 9,
+    is_active: true,
+    molecular_weight: "58.123",
+    has_gpm: true,
+  },
+  {
+    component_code: "IC5",
+    component_name: "Isopentane",
+    chemical_formula: "C5H12",
+    calculation_formula: null,
+    comments: "Branched pentane isomer.",
+    display_order: 10,
+    is_active: true,
+    molecular_weight: "72.15",
+    has_gpm: true,
+  },
+  {
+    component_code: "NC5",
+    component_name: "Normal Pentane",
+    chemical_formula: "C5H12",
+    calculation_formula: null,
+    comments: "Straight-chain pentane.",
+    display_order: 11,
+    is_active: true,
+    molecular_weight: "72.15",
+    has_gpm: true,
+  },
+  {
+    component_code: "C6+",
+    component_name: "Hexanes+",
+    chemical_formula: "C6+",
+    calculation_formula: null,
+    comments: "Aggregate of C6 and heavier hydrocarbons.",
+    display_order: 12,
+    is_active: true,
+    molecular_weight: "86.178",
+    has_gpm: true,
+  },
+];
+
+async function seedGasComponents() {
+  for (const component of DEFAULT_GAS_COMPONENTS) {
+    await prisma.gas_component_master.upsert({
+      where: { component_code: component.component_code },
+      create: component,
+      update: {
+        component_name: component.component_name,
+        chemical_formula: component.chemical_formula,
+        calculation_formula: component.calculation_formula,
+        comments: component.comments,
+        display_order: component.display_order,
+        is_active: component.is_active,
+        molecular_weight: component.molecular_weight,
+        has_gpm: component.has_gpm,
+      },
+    });
+  }
+}
 
 async function upsertRole(roleName) {
   // Use upsert by unique field - ensure the DB has a unique constraint on the chosen key.
@@ -342,7 +497,7 @@ async function main() {
             // per additional-db-scripts.sql: pressure_unit IN ('PSIG','PSIA')
             pressure_unit: "PSIG",
             temperature: "25 C",
-            field_h2s: "0 ppm",
+            field_h2s: 0,
             cost_code: "CC-001",
             // per additional-db-scripts.sql: checkin_type IN ('Cylinder','Sample')
             checkin_type: "Cylinder",
@@ -358,6 +513,13 @@ async function main() {
     }
   } catch (e) {
     console.warn("Seed: sample_checkin skipped:", e?.message || e);
+  }
+
+  // gas_component_master (unique: component_code)
+  try {
+    await seedGasComponents();
+  } catch (e) {
+    console.warn("Seed: gas_component_master skipped:", e?.message || e);
   }
 
   console.log("Seeding complete.");
