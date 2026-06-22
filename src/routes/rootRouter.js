@@ -18,6 +18,7 @@ const cylinderInventoryRouter = require("./cylinder_inventory.routes");
 const invoicesRouter = require("./invoices.routes");
 const importMachineReportsRouter = require("./import_machine_reports.routes");
 const gasComponentMasterRouter = require("./gas_component_master.routes");
+const analysisReportsRouter = require("./analysis_reports.routes");
 const jwtAuth = require("../middleware/jwtAuth");
 const authorize = require("../middleware/authorize");
 
@@ -54,6 +55,7 @@ router.use("/cylinder_inventory", jwtAuth, cylinderInventoryRouter);
 router.use("/invoices", jwtAuth, invoicesRouter);
 router.use("/import_machine_reports", jwtAuth, importMachineReportsRouter);
 router.use("/gas_component_master", jwtAuth, gasComponentMasterRouter);
+router.use("/analysis_reports", jwtAuth, analysisReportsRouter);
 router.use("/auth", authRouter);
 
 module.exports = router;

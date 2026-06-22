@@ -26,8 +26,16 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/sample_checkin/analysis_positions?work_order_number=WO-501349
 Authorization: Bearer {{authToken}}
 
+### List sample analysis positions (filter by import_machine_report_id)
+GET {{baseUrl}}/sample_checkin/analysis_positions?import_machine_report_id=6
+Authorization: Bearer {{authToken}}
+
+### List sample analysis positions (filter by import_id)
+GET {{baseUrl}}/sample_checkin/analysis_positions?import_id=IMP-20260621-0001
+Authorization: Bearer {{authToken}}
+
 ### Get sample analysis position by sample_checkin_id (view)
-GET {{baseUrl}}/sample_checkin/analysis_positions/1
+GET {{baseUrl}}/sample_checkin/analysis_positions/2
 Authorization: Bearer {{authToken}}
 
 ### Get sample check-in by id
@@ -118,13 +126,14 @@ Content-Type: application/json
   "remarks": "Updated via API"
 }
 
-### Update sample check-in analysis_position
+### Update sample check-in analysis_position and import_machine_report_id
 PUT {{baseUrl}}/sample_checkin/update_analysis_position/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "analysis_position": 9
+  "analysis_position": 9,
+  "import_machine_report_id": 6
 }
 
 

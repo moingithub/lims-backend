@@ -248,6 +248,7 @@ model sample_checkin {
   sample_fee         Decimal          @default(0) @db.Decimal(12, 2)
   h2_pop_fee         Decimal          @default(0) @db.Decimal(12, 2)
   spot_composite_fee Decimal          @default(0) @db.Decimal(12, 2)
+  import_machine_report_id Int?
   created_by_id      Int
   created_at         DateTime         @default(now())
   updated_at         DateTime         @updatedAt
@@ -258,6 +259,7 @@ model sample_checkin {
   company            companies        @relation(fields: [company_id], references: [id], onDelete: Restrict)
   created_by         users            @relation(fields: [created_by_id], references: [id])
   cylinder           cylinders?       @relation(fields: [cylinder_id], references: [id], onDelete: Restrict)
+  import_machine_report import_machine_reports? @relation(fields: [import_machine_report_id], references: [id], onDelete: SetNull)
 
   @@unique([work_order_number, analysis_position])
   @@index([company_id])
@@ -265,6 +267,7 @@ model sample_checkin {
   @@index([analysis_type_id])
   @@index([area_id])
   @@index([cylinder_id])
+  @@index([import_machine_report_id])
   @@index([created_by_id])
   @@index([status])
 }
@@ -358,6 +361,7 @@ model import_machine_reports {
   updated_at       DateTime                 @updatedAt
   created_by       users                    @relation(fields: [created_by_id], references: [id], onDelete: Restrict)
   results          machine_report_results[]
+  sampleCheckins   sample_checkin[]
 
   @@index([created_by_id])
   @@index([status])
@@ -434,6 +438,8 @@ view sample_analysis_position {
   analysis_number   String?
   status            String?
   analysis_position Int?
+  import_machine_report_id Int?
+  import_id             String?
 }
 
 

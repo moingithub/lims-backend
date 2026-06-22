@@ -171,6 +171,18 @@ function isCustomerWithCompany(req) {
   );
 }
 
+const SAMPLE_ANALYSIS_POSITION_SELECT = {
+  sample_checkin_id: true,
+  company_name: true,
+  work_order_number: true,
+  cylinder_number: true,
+  analysis_number: true,
+  status: true,
+  analysis_position: true,
+  import_machine_report_id: true,
+  import_id: true,
+};
+
 // Helper: generate work order number like WO-2026-0001
 async function generateWorkOrderNumber() {
   const year = new Date().getFullYear();
@@ -484,9 +496,20 @@ router.get("/analysis_positions", async (req, res) => {
       }
       where.analysis_position = pos;
     }
+    if (req.query.import_machine_report_id !== undefined) {
+      const reportId = Number(req.query.import_machine_report_id);
+      if (!Number.isInteger(reportId) || reportId <= 0) {
+        return res.status(400).json({ error: "Invalid import_machine_report_id" });
+      }
+      where.import_machine_report_id = reportId;
+    }
+    if (req.query.import_id) {
+      where.import_id = String(req.query.import_id);
+    }
 
     const list = await prisma.sample_analysis_position.findMany({
       where,
+      select: SAMPLE_ANALYSIS_POSITION_SELECT,
       orderBy: [{ work_order_number: "asc" }, { analysis_position: "asc" }],
     });
     return res.json(list);
@@ -515,7 +538,10 @@ router.get("/analysis_positions/:sample_checkin_id", async (req, res) => {
       where.company_name = company.name;
     }
 
-    const item = await prisma.sample_analysis_position.findFirst({ where });
+    const item = await prisma.sample_analysis_position.findFirst({
+      where,
+      select: SAMPLE_ANALYSIS_POSITION_SELECT,
+    });
     if (!item)
       return res.status(404).json({ error: "Sample analysis position not found" });
     return res.json(item);
@@ -820,7 +846,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
   }
 });
 
-// Update analysis_position only (no other field validation)
+// Update analysis_position and/or import_machine_report_id
 router.put(
   "/update_analysis_position/:id",
   authorize("sample_checkin"),
@@ -829,20 +855,52 @@ router.put(
     if (!Number.isInteger(id) || id <= 0)
       return res.status(400).json({ error: "Invalid id" });
 
-    const { analysis_position } = req.body || {};
-    if (analysis_position === undefined) {
-      return res.status(400).json({ error: "analysis_position is required" });
+    const { analysis_position, import_machine_report_id } = req.body || {};
+    if (
+      analysis_position === undefined &&
+      import_machine_report_id === undefined
+    ) {
+      return res.status(400).json({
+        error:
+          "At least one of analysis_position or import_machine_report_id is required",
+      });
     }
 
-    let value;
-    if (analysis_position === null) {
-      value = null;
-    } else {
-      const pos = Number(analysis_position);
-      if (!Number.isInteger(pos) || pos <= 0) {
-        return res.status(400).json({ error: "Invalid analysis_position" });
+    const updates = {};
+
+    if (analysis_position !== undefined) {
+      if (analysis_position === null) {
+        updates.analysis_position = null;
+      } else {
+        const pos = Number(analysis_position);
+        if (!Number.isInteger(pos) || pos <= 0) {
+          return res.status(400).json({ error: "Invalid analysis_position" });
+        }
+        updates.analysis_position = pos;
       }
-      value = pos;
+    }
+
+    if (import_machine_report_id !== undefined) {
+      if (import_machine_report_id === null) {
+        updates.import_machine_report_id = null;
+      } else {
+        const reportId = Number(import_machine_report_id);
+        if (!Number.isInteger(reportId) || reportId <= 0) {
+          return res.status(400).json({
+            error: "Invalid import_machine_report_id",
+          });
+        }
+        const report = await prisma.import_machine_reports.findUnique({
+          where: { id: reportId },
+          select: { id: true },
+        });
+        if (!report) {
+          return res.status(400).json({
+            error: "import_machine_report_id does not exist",
+          });
+        }
+        updates.import_machine_report_id = reportId;
+      }
     }
 
     try {
@@ -856,7 +914,7 @@ router.put(
 
       const updated = await prisma.sample_checkin.update({
         where: { id },
-        data: { analysis_position: value },
+        data: updates,
       });
       return res.json(updated);
     } catch (err) {
@@ -878,7 +936,7 @@ router.put(
       if (detail) return res.status(400).json({ error: detail });
       return res
         .status(500)
-        .json({ error: "Failed to update analysis_position" });
+        .json({ error: "Failed to update analysis position" });
     }
   },
 );
@@ -932,6 +990,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       sample_fee,
       h2_pop_fee,
       spot_composite_fee,
+      import_machine_report_id,
     } = req.body || {};
 
     const validateFK = async (model, idVal, name) => {
@@ -1011,6 +1070,20 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
         );
         if (errMsg) return res.status(400).json({ error: errMsg });
         updates.cylinder_id = Number(cylinder_id);
+      }
+    }
+
+    if (import_machine_report_id !== undefined) {
+      if (import_machine_report_id === null) {
+        updates.import_machine_report_id = null;
+      } else {
+        const errMsg = await validateFK(
+          "import_machine_reports",
+          import_machine_report_id,
+          "import_machine_report_id",
+        );
+        if (errMsg) return res.status(400).json({ error: errMsg });
+        updates.import_machine_report_id = Number(import_machine_report_id);
       }
     }
 

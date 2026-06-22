@@ -1,0 +1,3 @@
+### Get gas analysis report by sample_checkin_id
+GET {{baseUrl}}/analysis_reports/2
+Authorization: Bearer {{authToken}}
