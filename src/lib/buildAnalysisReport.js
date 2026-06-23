@@ -85,7 +85,8 @@ async function fetchMachineReportSection(checkin) {
       return String(a.component).localeCompare(String(b.component));
     })
     .map((row) => ({
-      component: blank(row.component),
+      component:
+        blank(row.component_description) || blank(row.component),
       mole_pct: blankNumber(row.mol_pct),
       wt_pct: blankNumber(row.wt_pct),
       gpm: blankNumber(row.gpm),

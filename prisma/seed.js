@@ -380,13 +380,12 @@ async function main() {
   }
 
   // company_contacts (unique: company_id + name)
-  let contactJohn = null;
   try {
-    contactJohn = await prisma.company_contacts.findFirst({
+    const existingContact = await prisma.company_contacts.findFirst({
       where: { company_id: companyId, name: "John Doe" },
     });
-    if (!contactJohn) {
-      contactJohn = await prisma.company_contacts.create({
+    if (!existingContact) {
+      await prisma.company_contacts.create({
         data: {
           company: { connect: { id: companyId } },
           name: "John Doe",
@@ -402,9 +401,8 @@ async function main() {
   }
 
   // cylinders (unique: cylinder_number)
-  let cyl1 = null;
   try {
-    cyl1 = await prisma.cylinders.upsert({
+    await prisma.cylinders.upsert({
       where: { cylinder_number: "30001" },
       create: {
         cylinder_number: "30001",
@@ -439,80 +437,6 @@ async function main() {
     });
   } catch (e) {
     console.warn("Seed: analysis_pricing skipped:", e?.message || e);
-  }
-
-  // cylinder_checkout (unique: cylinder_id + is_returned) -> create an OPEN checkout if none
-  try {
-    if (cyl1 && contactJohn) {
-      const openCheckout = await prisma.cylinder_checkout.findFirst({
-        where: { cylinder_id: cyl1.id, is_returned: false },
-      });
-      if (!openCheckout) {
-        await prisma.cylinder_checkout.create({
-          data: {
-            cylinder_id: cyl1.id,
-            company_id: companyId,
-            company_contact_id: contactJohn.id,
-            is_returned: false,
-            created_by_id: adminUser.id,
-          },
-        });
-      }
-    }
-  } catch (e) {
-    console.warn("Seed: cylinder_checkout skipped:", e?.message || e);
-  }
-
-  // sample_checkin (requires relations + created_by)
-  try {
-    const analysis = await prisma.analysis_pricing.findUnique({
-      where: { analysis_type: "Water Hardness" },
-    });
-    const area = await prisma.company_areas.findFirst({
-      where: { company_id: companyId, area: "HQ" },
-    });
-    if (analysis && contactJohn && cyl1) {
-      const existingCheckin = await prisma.sample_checkin.findFirst({
-        where: { analysis_number: "AN-0001" },
-      });
-      if (!existingCheckin) {
-        await prisma.sample_checkin.create({
-          data: {
-            company: { connect: { id: companyId } },
-            company_contact: { connect: { id: contactJohn.id } },
-            analysis_pricing: { connect: { id: analysis.id } },
-            cylinder: { connect: { id: cyl1.id } },
-            company_area: area ? { connect: { id: area.id } } : undefined,
-            customer_cylinder: false,
-            rushed: false,
-            sampled_by_lab: false,
-            analysis_number: "AN-0001",
-            producer: "Demo Producer",
-            well_name: "Well-001",
-            meter_number: "MTR-001",
-            // per additional-db-scripts.sql: sample_type IN ('Spot','Composite')
-            sample_type: "Spot",
-            flow_rate: "10 scfh",
-            pressure: "100",
-            // per additional-db-scripts.sql: pressure_unit IN ('PSIG','PSIA')
-            pressure_unit: "PSIG",
-            temperature: "25 C",
-            field_h2s: 0,
-            cost_code: "CC-001",
-            // per additional-db-scripts.sql: checkin_type IN ('Cylinder','Sample')
-            checkin_type: "Cylinder",
-            invoice_ref_name: "WO",
-            invoice_ref_value: "WO-0001",
-            remarks: "Initial demo check-in",
-            work_order_number: "WO-0001",
-            status: "Pending",
-            created_by: { connect: { id: adminUser.id } },
-          },
-        });
-      }
-    }
-  } catch (e) {
-    console.warn("Seed: sample_checkin skipped:", e?.message || e);
   }
 
   // gas_component_master (unique: component_code)

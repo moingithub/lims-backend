@@ -13,6 +13,9 @@ function computeNormalizedByPosition(results) {
   }
 
   return results.map((row) => {
+    if (row.component === "H2S") {
+      return row;
+    }
     const total = sumByPosition.get(row.analysis_position);
     let normalized = null;
     if (row.concentration != null && total) {
@@ -24,6 +27,24 @@ function computeNormalizedByPosition(results) {
 
 function buildComponentMasterMap(components) {
   return new Map(components.map((component) => [component.component_code, component]));
+}
+
+function buildComponentDescription(componentCode, componentMasterMap) {
+  const master = componentMasterMap.get(componentCode);
+  if (master?.component_name) {
+    return `${master.component_name} (${componentCode})`;
+  }
+  return componentCode;
+}
+
+function applyComponentDescriptions(results, componentMasterMap) {
+  return results.map((row) => ({
+    ...row,
+    component_description: buildComponentDescription(
+      row.component,
+      componentMasterMap,
+    ),
+  }));
 }
 
 function buildFieldH2sByPosition(checkins, results) {
@@ -68,11 +89,14 @@ function prependH2sRows(results, fieldH2sByPosition) {
     const positionRows = rowsByPosition.get(position);
     const first = positionRows[0];
     const fieldH2s = fieldH2sByPosition.get(position) ?? 0;
+    const h2sConcentration = fieldH2s / 10000;
 
     output.push({
       ...first,
       component: "H2S",
-      concentration: fieldH2s / 10000,
+      concentration: h2sConcentration,
+      normalized_concentration: h2sConcentration,
+      normalized: h2sConcentration,
     });
     output.push(...positionRows);
   }
@@ -127,6 +151,8 @@ module.exports = {
   roundTo4,
   computeNormalizedByPosition,
   buildComponentMasterMap,
+  buildComponentDescription,
+  applyComponentDescriptions,
   buildFieldH2sByPosition,
   prependH2sRows,
   computeDerivedFields,

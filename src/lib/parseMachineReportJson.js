@@ -51,9 +51,9 @@ function parseMachineReportJson(content) {
     throw new Error("Machine report JSON is missing detectors");
   }
 
-  const results = [];
+  const resultMap = new Map();
 
-  for (const [detector_module, componentList] of Object.entries(detectors)) {
+  for (const [, componentList] of Object.entries(detectors)) {
     if (!Array.isArray(componentList)) continue;
 
     for (const componentObj of componentList) {
@@ -83,15 +83,12 @@ function parseMachineReportJson(content) {
             if (!Number.isNaN(parsed.getTime())) sample_time = parsed;
           }
 
-          results.push({
+          resultMap.set(`${analysis_position}:${component}`, {
             analysis_position,
             sample_time,
             sample_name: positionToName.get(analysis_position) ?? null,
-            detector_module,
             component,
             method_name,
-            rt_s: numAt(metrics["RT(s)"], idx),
-            area: numAt(metrics.area, idx),
             normalized_concentration: numAt(
               metrics.normalizedConcentration,
               idx,
@@ -102,6 +99,8 @@ function parseMachineReportJson(content) {
       }
     }
   }
+
+  const results = [...resultMap.values()];
 
   if (results.length === 0) {
     throw new Error("No machine report results found in JSON");

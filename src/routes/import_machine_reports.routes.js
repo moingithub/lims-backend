@@ -13,6 +13,7 @@ const {
   buildFieldH2sByPosition,
   prependH2sRows,
   computeDerivedFields,
+  applyComponentDescriptions,
 } = require("../lib/computeMachineReportFields");
 
 const router = express.Router();
@@ -158,17 +159,19 @@ async function importMachineReportFromFile({
         resultsWithH2s,
         componentMasterMap,
       );
+      const resultsWithDescriptions = applyComponentDescriptions(
+        resultsWithDerived,
+        componentMasterMap,
+      );
       await tx.machine_report_results.createMany({
-        data: resultsWithDerived.map((row) => ({
+        data: resultsWithDescriptions.map((row) => ({
           import_machine_report_id: created.id,
           analysis_position: row.analysis_position,
           sample_time: row.sample_time,
           sample_name: row.sample_name,
-          detector_module: row.detector_module,
           component: row.component,
+          component_description: row.component_description,
           method_name: row.method_name,
-          rt_s: row.rt_s,
-          area: row.area,
           normalized_concentration: row.normalized_concentration,
           concentration: row.concentration,
           normalized: row.normalized,
