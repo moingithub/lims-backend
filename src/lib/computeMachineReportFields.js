@@ -1,7 +1,28 @@
-const GPM_FACTOR = 0.002767;
+// GPA standard base conditions: 14.696 psia (1 atm) and 60°F
+const STD_PRESSURE_PSIA = 14.696;
+const STD_TEMPERATURE_F = 60;
+const STD_CF_PER_MOL = 379.49;
+
+// Gallons per pound-mol by component at standard conditions (GPA Table 7 / GPA 2172).
+const GAL_PER_LB_MOL_AT_STD = {
+  C2: 10.1259,
+  C3: 10.4327,
+  IC4: 12.3859,
+  NC4: 11.9371,
+  IC5: 13.8595,
+  NC5: 13.713,
+  "C6+": 16.392,
+};
 
 function roundTo4(value) {
   return Math.round(value * 10000) / 10000;
+}
+
+function computeGpmAtStandardConditions(molPct, componentCode) {
+  const galPerLbMol = GAL_PER_LB_MOL_AT_STD[componentCode];
+  if (molPct == null || galPerLbMol == null) return null;
+  // GPM = [(Mol% / 100) / Cf/Mol] × 1000 × Gal/#Mol
+  return roundTo4((molPct / 100 / STD_CF_PER_MOL) * 1000 * galPerLbMol);
 }
 
 function computeNormalizedByPosition(results) {
@@ -137,7 +158,7 @@ function computeDerivedFields(results, componentMasterMap) {
           wt_pct = roundTo4((100 * mol_pct * mw) / totalWeight);
         }
         if (master.has_gpm) {
-          gpm = roundTo4(mol_pct * mw * GPM_FACTOR);
+          gpm = computeGpmAtStandardConditions(mol_pct, row.component);
         }
       }
     }
@@ -147,8 +168,12 @@ function computeDerivedFields(results, componentMasterMap) {
 }
 
 module.exports = {
-  GPM_FACTOR,
+  STD_PRESSURE_PSIA,
+  STD_TEMPERATURE_F,
+  STD_CF_PER_MOL,
+  GAL_PER_LB_MOL_AT_STD,
   roundTo4,
+  computeGpmAtStandardConditions,
   computeNormalizedByPosition,
   buildComponentMasterMap,
   buildComponentDescription,
