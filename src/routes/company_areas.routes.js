@@ -62,10 +62,8 @@ router.post("/", authorize("company_areas"), async (req, res) => {
     }
     const { company_id, area, region, description, active } = req.body || {};
 
-    if (!area || !region || !description) {
-      return res
-        .status(400)
-        .json({ error: "area, region and description are required" });
+    if (!area || !region) {
+      return res.status(400).json({ error: "Area and region are required" });
     }
 
     let companyIdToUse = company_id;

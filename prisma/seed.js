@@ -48,6 +48,7 @@ const DEFAULT_MODULE_NAMES = [
   "company_master",
   "contacts",
   "import_machine_report",
+  "import_user_report",
   "gas_component_master",
   "cylinder_inventory",
   "analysis_reports",
@@ -65,6 +66,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 1,
     is_active: true,
     molecular_weight: "34.0809",
+    gal_per_lb_mol: null,
+    gross_heating_value: "637.1",
     has_gpm: false,
   },
   {
@@ -76,6 +79,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 2,
     is_active: true,
     molecular_weight: "31.9988",
+    gal_per_lb_mol: null,
+    gross_heating_value: "0",
     has_gpm: false,
   },
   {
@@ -87,6 +92,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 3,
     is_active: true,
     molecular_weight: "28.0135",
+    gal_per_lb_mol: null,
+    gross_heating_value: "0",
     has_gpm: false,
   },
   {
@@ -98,6 +105,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 4,
     is_active: true,
     molecular_weight: "16.0425",
+    gal_per_lb_mol: null,
+    gross_heating_value: "1010.0",
     has_gpm: false,
   },
   {
@@ -109,6 +118,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 5,
     is_active: true,
     molecular_weight: "44.01",
+    gal_per_lb_mol: null,
+    gross_heating_value: "0",
     has_gpm: false,
   },
   {
@@ -120,6 +131,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 6,
     is_active: true,
     molecular_weight: "30.07",
+    gal_per_lb_mol: "10.1259",
+    gross_heating_value: "1769.7",
     has_gpm: true,
   },
   {
@@ -131,6 +144,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 7,
     is_active: true,
     molecular_weight: "44.097",
+    gal_per_lb_mol: "10.4327",
+    gross_heating_value: "2516.1",
     has_gpm: true,
   },
   {
@@ -142,6 +157,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 8,
     is_active: true,
     molecular_weight: "58.123",
+    gal_per_lb_mol: "12.3859",
+    gross_heating_value: "3251.9",
     has_gpm: true,
   },
   {
@@ -153,6 +170,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 9,
     is_active: true,
     molecular_weight: "58.123",
+    gal_per_lb_mol: "11.9371",
+    gross_heating_value: "3261.5",
     has_gpm: true,
   },
   {
@@ -164,6 +183,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 10,
     is_active: true,
     molecular_weight: "72.15",
+    gal_per_lb_mol: "13.8595",
+    gross_heating_value: "4000.9",
     has_gpm: true,
   },
   {
@@ -175,6 +196,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 11,
     is_active: true,
     molecular_weight: "72.15",
+    gal_per_lb_mol: "13.713",
+    gross_heating_value: "4008.7",
     has_gpm: true,
   },
   {
@@ -186,6 +209,8 @@ const DEFAULT_GAS_COMPONENTS = [
     display_order: 12,
     is_active: true,
     molecular_weight: "86.178",
+    gal_per_lb_mol: "16.392",
+    gross_heating_value: "4752.0",
     has_gpm: true,
   },
 ];
@@ -203,6 +228,8 @@ async function seedGasComponents() {
         display_order: component.display_order,
         is_active: component.is_active,
         molecular_weight: component.molecular_weight,
+        gal_per_lb_mol: component.gal_per_lb_mol,
+        gross_heating_value: component.gross_heating_value,
         has_gpm: component.has_gpm,
       },
     });

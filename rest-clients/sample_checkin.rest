@@ -82,9 +82,9 @@ Content-Type: application/json
 
 {
   "company_id": 2,
-  "company_contact_id": 2,
+  "company_contact_id": 1,
   "analysis_type_id": 1,
-  "area_id": 2,
+  "area_id": 1,
   "customer_cylinder": false,
   "rushed": false,
   "sampled_by_lab": false,
@@ -100,6 +100,7 @@ Content-Type: application/json
   "pressure_unit": "PSIA",
   "temperature": "25 C",
   "field_h2s": 0.0009,
+  "pressure_base_factor": 0,
   "cost_code": "CC-001",
   "checkin_type": "Bottle",
   "invoice_ref_name": "WO",
@@ -123,7 +124,8 @@ Content-Type: application/json
 
 {
   "status": "Completed",
-  "remarks": "Updated via API"
+  "remarks": "Updated via API",
+  "pressure_base_factor": 0
 }
 
 ### Update sample check-in analysis_position and import_machine_report_id

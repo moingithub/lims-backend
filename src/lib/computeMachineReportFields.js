@@ -3,23 +3,11 @@ const STD_PRESSURE_PSIA = 14.696;
 const STD_TEMPERATURE_F = 60;
 const STD_CF_PER_MOL = 379.49;
 
-// Gallons per pound-mol by component at standard conditions (GPA Table 7 / GPA 2172).
-const GAL_PER_LB_MOL_AT_STD = {
-  C2: 10.1259,
-  C3: 10.4327,
-  IC4: 12.3859,
-  NC4: 11.9371,
-  IC5: 13.8595,
-  NC5: 13.713,
-  "C6+": 16.392,
-};
-
 function roundTo4(value) {
   return Math.round(value * 10000) / 10000;
 }
 
-function computeGpmAtStandardConditions(molPct, componentCode) {
-  const galPerLbMol = GAL_PER_LB_MOL_AT_STD[componentCode];
+function computeGpmAtStandardConditions(molPct, galPerLbMol) {
   if (molPct == null || galPerLbMol == null) return null;
   // GPM = [(Mol% / 100) / Cf/Mol] × 1000 × Gal/#Mol
   return roundTo4((molPct / 100 / STD_CF_PER_MOL) * 1000 * galPerLbMol);
@@ -116,7 +104,7 @@ function prependH2sRows(results, fieldH2sByPosition) {
       ...first,
       component: "H2S",
       concentration: h2sConcentration,
-      normalized_concentration: h2sConcentration,
+      normalized_concentration: null,
       normalized: h2sConcentration,
     });
     output.push(...positionRows);
@@ -125,7 +113,11 @@ function prependH2sRows(results, fieldH2sByPosition) {
   return output;
 }
 
-function computeDerivedFields(results, componentMasterMap) {
+function computeDerivedFields(
+  results,
+  componentMasterMap,
+  pressureBaseFactor = 0,
+) {
   const withNormalized = computeNormalizedByPosition(results);
   const weightSumByPosition = new Map();
 
@@ -145,6 +137,8 @@ function computeDerivedFields(results, componentMasterMap) {
     const mol_pct = row.normalized ?? null;
     let wt_pct = null;
     let gpm = null;
+    let dry_gross_ideal = null;
+    let wet_sample_ideal = null;
 
     if (mol_pct != null) {
       const master = componentMasterMap.get(row.component);
@@ -152,26 +146,65 @@ function computeDerivedFields(results, componentMasterMap) {
         master?.molecular_weight != null
           ? Number(master.molecular_weight)
           : null;
+      const grossHeatingValue =
+        master?.gross_heating_value != null
+          ? Number(master.gross_heating_value)
+          : null;
+      if (grossHeatingValue != null) {
+        dry_gross_ideal = roundTo4((mol_pct * grossHeatingValue) / 100);
+        wet_sample_ideal = roundTo4(
+          grossHeatingValue *
+            (mol_pct / 100) *
+            (1 - pressureBaseFactor),
+        );
+      }
       if (mw != null) {
         const totalWeight = weightSumByPosition.get(row.analysis_position);
         if (totalWeight) {
           wt_pct = roundTo4((100 * mol_pct * mw) / totalWeight);
         }
-        if (master.has_gpm) {
-          gpm = computeGpmAtStandardConditions(mol_pct, row.component);
+        const galPerLbMol =
+          master.gal_per_lb_mol != null ? Number(master.gal_per_lb_mol) : null;
+        if (galPerLbMol != null) {
+          gpm = computeGpmAtStandardConditions(mol_pct, galPerLbMol);
         }
       }
     }
 
-    return { ...row, mol_pct, wt_pct, gpm };
+    return { ...row, mol_pct, wt_pct, gpm, dry_gross_ideal, wet_sample_ideal };
   });
+}
+
+function sumDryGrossIdealByPosition(results) {
+  const sums = new Map();
+  for (const row of results) {
+    if (row.dry_gross_ideal == null) continue;
+    const key = row.analysis_position;
+    sums.set(key, (sums.get(key) || 0) + row.dry_gross_ideal);
+  }
+  for (const [key, total] of sums) {
+    sums.set(key, roundTo4(total));
+  }
+  return sums;
+}
+
+function sumWetSampleIdealByPosition(results) {
+  const sums = new Map();
+  for (const row of results) {
+    if (row.wet_sample_ideal == null) continue;
+    const key = row.analysis_position;
+    sums.set(key, (sums.get(key) || 0) + row.wet_sample_ideal);
+  }
+  for (const [key, total] of sums) {
+    sums.set(key, roundTo4(total));
+  }
+  return sums;
 }
 
 module.exports = {
   STD_PRESSURE_PSIA,
   STD_TEMPERATURE_F,
   STD_CF_PER_MOL,
-  GAL_PER_LB_MOL_AT_STD,
   roundTo4,
   computeGpmAtStandardConditions,
   computeNormalizedByPosition,
@@ -181,4 +214,6 @@ module.exports = {
   buildFieldH2sByPosition,
   prependH2sRows,
   computeDerivedFields,
+  sumDryGrossIdealByPosition,
+  sumWetSampleIdealByPosition,
 };

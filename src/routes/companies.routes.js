@@ -4,6 +4,17 @@ const authorize = require("../middleware/authorize");
 
 const router = express.Router();
 
+function parseOptionalDecimal(value, fieldName) {
+  if (value === undefined || value === null || value === "") return undefined;
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    const err = new Error(`Invalid ${fieldName}`);
+    err.status = 400;
+    throw err;
+  }
+  return num;
+}
+
 function isCustomerWithCompany(req) {
   return (
     req &&
@@ -68,12 +79,20 @@ router.post("/", authorize("companies"), async (req, res) => {
       billing_address,
       charge_h2_pop_fee,
       h2_pop_fee_rate,
+      pressure_base,
+      pressure_base_factor,
       active,
     } = req.body;
 
     if (!code || !name) {
       return res.status(400).json({ error: "code and name are required" });
     }
+
+    const parsedPressureBase = parseOptionalDecimal(pressure_base, "pressure_base");
+    const parsedPressureBaseFactor = parseOptionalDecimal(
+      pressure_base_factor,
+      "pressure_base_factor",
+    );
 
     const created = await prisma.companies.create({
       data: {
@@ -87,6 +106,12 @@ router.post("/", authorize("companies"), async (req, res) => {
         charge_h2_pop_fee:
           typeof charge_h2_pop_fee === "boolean" ? charge_h2_pop_fee : false,
         h2_pop_fee_rate: h2_pop_fee_rate !== undefined ? h2_pop_fee_rate : 0,
+        ...(parsedPressureBase !== undefined
+          ? { pressure_base: parsedPressureBase }
+          : {}),
+        ...(parsedPressureBaseFactor !== undefined
+          ? { pressure_base_factor: parsedPressureBaseFactor }
+          : {}),
         active: typeof active === "boolean" ? active : true,
         created_by:
           req.user && req.user.userId
@@ -97,6 +122,15 @@ router.post("/", authorize("companies"), async (req, res) => {
 
     return res.status(201).json(created);
   } catch (err) {
+    if (err?.status === 400) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err?.name === "PrismaClientValidationError") {
+      return res.status(400).json({
+        error: "Invalid company data",
+        detail: err.message,
+      });
+    }
     if (err && err.code === "P2002")
       return res.status(400).json({ error: "code or name must be unique" });
     const detail = prismaErrorDetail(err);
@@ -127,8 +161,16 @@ router.put("/:id", authorize("companies"), async (req, res) => {
       billing_address,
       charge_h2_pop_fee,
       h2_pop_fee_rate,
+      pressure_base,
+      pressure_base_factor,
       active,
     } = req.body;
+
+    const parsedPressureBase = parseOptionalDecimal(pressure_base, "pressure_base");
+    const parsedPressureBaseFactor = parseOptionalDecimal(
+      pressure_base_factor,
+      "pressure_base_factor",
+    );
 
     const updated = await prisma.companies.update({
       where: { id },
@@ -144,12 +186,27 @@ router.put("/:id", authorize("companies"), async (req, res) => {
           ? { charge_h2_pop_fee: Boolean(charge_h2_pop_fee) }
           : {}),
         ...(h2_pop_fee_rate !== undefined ? { h2_pop_fee_rate } : {}),
+        ...(parsedPressureBase !== undefined
+          ? { pressure_base: parsedPressureBase }
+          : {}),
+        ...(parsedPressureBaseFactor !== undefined
+          ? { pressure_base_factor: parsedPressureBaseFactor }
+          : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
       },
     });
 
     return res.json(updated);
   } catch (err) {
+    if (err?.status === 400) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err?.name === "PrismaClientValidationError") {
+      return res.status(400).json({
+        error: "Invalid company data",
+        detail: err.message,
+      });
+    }
     if (err && err.code === "P2002")
       return res.status(400).json({ error: "code or name must be unique" });
     if (err && err.code === "P2025")

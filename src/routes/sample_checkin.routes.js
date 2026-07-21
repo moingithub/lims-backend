@@ -599,6 +599,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       pressure_unit,
       temperature,
       field_h2s,
+      pressure_base_factor,
       cost_code,
       checkin_type,
       invoice_ref_name,
@@ -790,6 +791,8 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
 
     // const finalWorkOrderNumber = await generateWorkOrderNumber();
 
+    const parsedPressureBaseFactor = parseOptionalFloat(pressure_base_factor);
+
     const created = await prisma.sample_checkin.create({
       data: {
         company: { connect: { id: compId } },
@@ -813,6 +816,9 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         pressure_unit: finalPressureUnit,
         temperature: temperature ?? null,
         field_h2s: parseOptionalFloat(field_h2s) ?? 0,
+        ...(parsedPressureBaseFactor != null
+          ? { pressure_base_factor: parsedPressureBaseFactor }
+          : {}),
         cost_code: cost_code ?? null,
         checkin_type: finalCheckinType,
         invoice_ref_name: invoice_ref_name ?? null,
@@ -976,6 +982,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       pressure_unit,
       temperature,
       field_h2s,
+      pressure_base_factor,
       cost_code,
       checkin_type,
       invoice_ref_name,
@@ -1167,6 +1174,13 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
     if (temperature !== undefined) updates.temperature = temperature ?? null;
     if (field_h2s !== undefined) {
       updates.field_h2s = parseOptionalFloat(field_h2s) ?? 0;
+    }
+    if (pressure_base_factor !== undefined) {
+      const factor = parseOptionalFloat(pressure_base_factor);
+      if (factor == null) {
+        return res.status(400).json({ error: "Invalid pressure_base_factor" });
+      }
+      updates.pressure_base_factor = factor;
     }
     if (cost_code !== undefined) updates.cost_code = cost_code ?? null;
     if (checkin_type !== undefined) {

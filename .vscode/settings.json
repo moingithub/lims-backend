@@ -8,7 +8,7 @@
   "rest-client.environmentVariables": {
     "local": {
       "baseUrl": "http://localhost:4000/api",
-      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc4MjE4MDYzNiwiZXhwIjoxNzgyMjA5NDM2fQ.ia62WrRrqRqsYM7fNIeVYdW9yeLybCDQlxpwE8Hg0PE"
+      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc4NDU1MTAyNiwiZXhwIjoxNzg0NTc5ODI2fQ.E-Zpfz_JwSj0c07G74HhhyWcSREvRHSx7ZPD0GaJCQY"
     },
     "demo": {
       "baseUrl": "http://47.29.134.42:5000/api",

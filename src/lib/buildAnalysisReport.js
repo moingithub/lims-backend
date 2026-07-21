@@ -1,4 +1,7 @@
 const { prisma } = require("./common");
+const {
+  ANALYSIS_RESULT_METRIC_TYPES,
+} = require("./insertAnalysisResultMetrics");
 
 function blank(value) {
   if (value === undefined || value === null) return "";
@@ -26,6 +29,33 @@ function emptyAnalysisMetricGroup() {
   };
 }
 
+function buildAnalysisMetricGroup(metricRow) {
+  if (!metricRow) return emptyAnalysisMetricGroup();
+  return {
+    dry: {
+      ideal: blankNumber(metricRow.dry_ideal),
+      real: blankNumber(metricRow.dry_real),
+    },
+    wet: {
+      ideal: blankNumber(metricRow.wet_ideal),
+      real: blankNumber(metricRow.wet_real),
+    },
+  };
+}
+
+function buildAnalysisResultsFromMetrics(metricRows) {
+  const byMetric = new Map(metricRows.map((row) => [row.metric, row]));
+  const analysisResults = {};
+  for (const metric of ANALYSIS_RESULT_METRIC_TYPES) {
+    analysisResults[metric] = buildAnalysisMetricGroup(byMetric.get(metric));
+  }
+  return analysisResults;
+}
+
+function emptyAnalysisResults() {
+  return buildAnalysisResultsFromMetrics([]);
+}
+
 function formatAnalyzedOn(value) {
   if (value == null) return "";
   const date = value instanceof Date ? value : new Date(value);
@@ -42,10 +72,11 @@ async function fetchMachineReportSection(checkin) {
       method: "",
       analyzed_on: "",
       component_table: [],
+      analysis_results: emptyAnalysisResults(),
     };
   }
 
-  const [importReport, rows, gasComponents] = await Promise.all([
+  const [importReport, rows, gasComponents, metricRows] = await Promise.all([
     prisma.import_machine_reports.findUnique({
       where: { id: importMachineReportId },
       select: { method_name: true },
@@ -59,6 +90,12 @@ async function fetchMachineReportSection(checkin) {
     prisma.gas_component_master.findMany({
       where: { is_active: true },
       orderBy: [{ display_order: "asc" }, { component_code: "asc" }],
+    }),
+    prisma.analysis_result_metrics.findMany({
+      where: {
+        import_machine_report_id: importMachineReportId,
+        analysis_position: analysisPosition,
+      },
     }),
   ]);
 
@@ -96,6 +133,7 @@ async function fetchMachineReportSection(checkin) {
     method,
     analyzed_on: analyzedOn,
     component_table: componentTable,
+    analysis_results: buildAnalysisResultsFromMetrics(metricRows),
   };
 }
 
@@ -149,15 +187,11 @@ async function buildAnalysisReport(sampleCheckinId) {
       physical_constant: "",
     },
     component_table: machineReport.component_table,
-    analysis_results: {
-      gross_heating_value: emptyAnalysisMetricGroup(),
-      specific_gravity: emptyAnalysisMetricGroup(),
-      compressibility_factor: emptyAnalysisMetricGroup(),
-      gpm: emptyAnalysisMetricGroup(),
-    },
+    analysis_results: machineReport.analysis_results,
     gpm_summary: {
-      c2_plus: "",
-      c3_plus: "",
+      // User Excel imports store C2+/C3+ on the gpm metric dry_real / wet_real
+      c2_plus: blankNumber(machineReport.analysis_results?.gpm?.dry?.real),
+      c3_plus: blankNumber(machineReport.analysis_results?.gpm?.wet?.real),
     },
   };
 }

@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "analysis_result_metric_type" AS ENUM ('gross_heating_value', 'specific_gravity', 'compressibility_factor', 'gpm');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
@@ -26,6 +29,8 @@ CREATE TABLE "companies" (
     "billing_address" TEXT,
     "charge_h2_pop_fee" BOOLEAN NOT NULL DEFAULT false,
     "h2_pop_fee_rate" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "pressure_base" DECIMAL(10,6) NOT NULL DEFAULT 0,
+    "pressure_base_factor" DECIMAL(10,6) NOT NULL DEFAULT 0,
     "active" BOOLEAN NOT NULL DEFAULT true,
     "created_by_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -173,6 +178,7 @@ CREATE TABLE "sample_checkin" (
     "pressure_unit" TEXT,
     "temperature" TEXT,
     "field_h2s" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "pressure_base_factor" DECIMAL(10,6) NOT NULL DEFAULT 0,
     "cost_code" TEXT,
     "checkin_type" TEXT NOT NULL,
     "invoice_ref_name" TEXT,
@@ -271,6 +277,9 @@ CREATE TABLE "import_machine_reports" (
     "file_name" TEXT NOT NULL,
     "stored_file_name" TEXT NOT NULL,
     "method_name" TEXT,
+    "company_id" INTEGER,
+    "pressure_base" DECIMAL(10,6) NOT NULL DEFAULT 0,
+    "pressure_base_factor" DECIMAL(10,6) NOT NULL DEFAULT 0,
     "created_by_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -294,9 +303,25 @@ CREATE TABLE "machine_report_results" (
     "mol_pct" DECIMAL(18,4),
     "wt_pct" DECIMAL(18,4),
     "gpm" DECIMAL(18,4),
+    "dry_gross_ideal" DECIMAL(18,4),
+    "wet_sample_ideal" DECIMAL(18,4),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "machine_report_results_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "analysis_result_metrics" (
+    "id" SERIAL NOT NULL,
+    "import_machine_report_id" INTEGER NOT NULL,
+    "analysis_position" INTEGER NOT NULL,
+    "metric" "analysis_result_metric_type" NOT NULL,
+    "dry_ideal" DECIMAL(18,6),
+    "dry_real" DECIMAL(18,6),
+    "wet_ideal" DECIMAL(18,6),
+    "wet_real" DECIMAL(18,6),
+
+    CONSTRAINT "analysis_result_metrics_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -310,6 +335,8 @@ CREATE TABLE "gas_component_master" (
     "display_order" INTEGER NOT NULL,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "molecular_weight" DECIMAL(8,4),
+    "gal_per_lb_mol" DECIMAL(10,4),
+    "gross_heating_value" DECIMAL(10,4),
     "has_gpm" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -467,6 +494,9 @@ CREATE UNIQUE INDEX "import_machine_reports_import_id_key" ON "import_machine_re
 CREATE INDEX "import_machine_reports_created_by_id_idx" ON "import_machine_reports"("created_by_id");
 
 -- CreateIndex
+CREATE INDEX "import_machine_reports_company_id_idx" ON "import_machine_reports"("company_id");
+
+-- CreateIndex
 CREATE INDEX "import_machine_reports_status_idx" ON "import_machine_reports"("status");
 
 -- CreateIndex
@@ -480,6 +510,15 @@ CREATE INDEX "machine_report_results_component_idx" ON "machine_report_results"(
 
 -- CreateIndex
 CREATE UNIQUE INDEX "machine_report_results_import_machine_report_id_analysis_po_key" ON "machine_report_results"("import_machine_report_id", "analysis_position", "component");
+
+-- CreateIndex
+CREATE INDEX "analysis_result_metrics_import_machine_report_id_idx" ON "analysis_result_metrics"("import_machine_report_id");
+
+-- CreateIndex
+CREATE INDEX "analysis_result_metrics_analysis_position_idx" ON "analysis_result_metrics"("analysis_position");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "analysis_result_metrics_import_machine_report_id_analysis_p_key" ON "analysis_result_metrics"("import_machine_report_id", "analysis_position", "metric");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "gas_component_master_component_code_key" ON "gas_component_master"("component_code");
@@ -596,4 +635,10 @@ ALTER TABLE "invoice_lines" ADD CONSTRAINT "invoice_lines_created_by_id_fkey" FO
 ALTER TABLE "import_machine_reports" ADD CONSTRAINT "import_machine_reports_created_by_id_fkey" FOREIGN KEY ("created_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "import_machine_reports" ADD CONSTRAINT "import_machine_reports_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "companies"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "machine_report_results" ADD CONSTRAINT "machine_report_results_import_machine_report_id_fkey" FOREIGN KEY ("import_machine_report_id") REFERENCES "import_machine_reports"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "analysis_result_metrics" ADD CONSTRAINT "analysis_result_metrics_import_machine_report_id_fkey" FOREIGN KEY ("import_machine_report_id") REFERENCES "import_machine_reports"("id") ON DELETE CASCADE ON UPDATE CASCADE;

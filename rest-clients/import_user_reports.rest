@@ -1,0 +1,33 @@
+### List import user reports
+GET {{baseUrl}}/import_user_reports
+Authorization: Bearer {{authToken}}
+
+### Upload Excel-Report-001.xlsx
+POST {{baseUrl}}/import_user_reports
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=----FormBoundary
+
+------FormBoundary
+Content-Disposition: form-data; name="company_id"
+
+1
+------FormBoundary
+Content-Disposition: form-data; name="file"; filename="Excel-Report-001.xlsx"
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+< D:\Projects\LIMS-Backend\uploads\user_reports\Excel-Report-001.xlsx
+
+------FormBoundary--
+
+### Update import record status (Imported | Validated | Error | Archived)
+PUT {{baseUrl}}/import_user_reports/1/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "Validated"
+}
+
+### Delete import record (also removes stored file)
+DELETE {{baseUrl}}/import_user_reports/1
+Authorization: Bearer {{authToken}}

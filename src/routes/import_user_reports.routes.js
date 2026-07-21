@@ -5,49 +5,25 @@ const fs = require("fs");
 const { prisma, prismaErrorDetail } = require("../lib/common");
 const authorize = require("../middleware/authorize");
 const {
-  parseMachineReportJson,
-  isJsonMachineReportFile,
-} = require("../lib/parseMachineReportJson");
+  SOURCE_MACHINE,
+  DEFAULT_ANALYSIS_POSITION,
+  parseUserReportExcel,
+} = require("../lib/parseUserReportExcel");
 const {
-  buildComponentMasterMap,
-  buildFieldH2sByPosition,
-  prependH2sRows,
-  computeDerivedFields,
-  applyComponentDescriptions,
-  sumDryGrossIdealByPosition,
-  sumWetSampleIdealByPosition,
-} = require("../lib/computeMachineReportFields");
-const {
-  insertAnalysisResultMetricsForImport,
+  insertUserReportAnalysisResultMetrics,
 } = require("../lib/insertAnalysisResultMetrics");
 
 const router = express.Router();
 
-const UPLOAD_DIR = path.join(
-  __dirname,
-  "..",
-  "..",
-  "uploads",
-  "machine_reports",
-);
-const ALLOWED_SOURCE_MACHINES = ["Inficon GC", "Scion GC"];
+const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads", "user_reports");
 const ALLOWED_MIME_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.ms-excel",
-  "text/csv",
-  "application/csv",
-  "application/json",
-  "text/json",
   "application/octet-stream",
 ]);
-const ALLOWED_EXTENSIONS = new Set([
-  ".xlsx",
-  ".xls",
-  ".csv",
-  ".json",
-  ".fusion-data",
-]);
+const ALLOWED_EXTENSIONS = new Set([".xlsx", ".xls"]);
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const VALID_STATUSES = new Set(["Imported", "Validated", "Error", "Archived"]);
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -61,27 +37,15 @@ const upload = multer({
     },
   }),
   fileFilter: (_req, file, cb) => {
-    const name = file.originalname.toLowerCase();
-    const ext = path.extname(name).toLowerCase();
-    if (
-      ALLOWED_EXTENSIONS.has(ext) ||
-      name.endsWith(".fusion-data") ||
-      ALLOWED_MIME_TYPES.has(file.mimetype)
-    ) {
+    const ext = path.extname(file.originalname.toLowerCase()).toLowerCase();
+    if (ALLOWED_EXTENSIONS.has(ext) || ALLOWED_MIME_TYPES.has(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(
-        new Error(
-          "Only Excel, CSV, JSON, or FUSION-DATA (.fusion-data) files are allowed",
-        ),
-        false,
-      );
+      cb(new Error("Only Excel (.xlsx, .xls) files are allowed"), false);
     }
   },
   limits: { fileSize: MAX_FILE_SIZE },
 });
-
-const VALID_STATUSES = new Set(["Imported", "Validated", "Error", "Archived"]);
 
 const IMPORT_RECORD_INCLUDE = {
   created_by: { select: { id: true, name: true } },
@@ -130,7 +94,7 @@ async function generateImportId(client = prisma) {
   return `IMP-${String(next).padStart(3, "0")}`;
 }
 
-function mapRecord(row) {
+function mapRecord(row, extras = {}) {
   return {
     id: row.id,
     import_id: row.import_id,
@@ -146,138 +110,153 @@ function mapRecord(row) {
     uploaded_by: row.created_by?.name || "Unknown",
     imported_date_time: row.created_at.toISOString(),
     created_by: row.created_by_id,
+    ...extras,
   };
 }
 
-async function importMachineReportFromFile({
+async function importUserReportFromFile({
   filePath,
   originalName,
-  sourceMachine,
   createdById,
   companyId,
   pressureBase,
   pressureBaseFactor,
+  sampleCheckinId,
 }) {
-  let parsed = null;
-  if (isJsonMachineReportFile(originalName)) {
-    const content = fs.readFileSync(filePath, "utf8");
-    parsed = parseMachineReportJson(content);
-  }
+  const parsed = await parseUserReportExcel(filePath);
+  const analysisPosition =
+    parsed.analysis_position ?? DEFAULT_ANALYSIS_POSITION;
 
   return prisma.$transaction(async (tx) => {
+    let checkin = null;
+    if (sampleCheckinId != null) {
+      checkin = await tx.sample_checkin.findUnique({
+        where: { id: sampleCheckinId },
+        select: {
+          id: true,
+          analysis_number: true,
+          analysis_position: true,
+          company_id: true,
+        },
+      });
+      if (!checkin) {
+        const err = new Error("sample_checkin_id does not exist");
+        err.status = 400;
+        throw err;
+      }
+    } else if (parsed.analysis_number) {
+      checkin = await tx.sample_checkin.findUnique({
+        where: { analysis_number: String(parsed.analysis_number) },
+        select: {
+          id: true,
+          analysis_number: true,
+          analysis_position: true,
+          company_id: true,
+        },
+      });
+    }
+
+    const resolvedCompanyId = companyId ?? checkin?.company_id ?? null;
+    const resolvedPosition = checkin?.analysis_position ?? analysisPosition;
+
     const import_id = await generateImportId(tx);
     const created = await tx.import_machine_reports.create({
       data: {
         import_id,
-        source_machine: sourceMachine,
+        source_machine: SOURCE_MACHINE,
         status: "Imported",
         file_name: originalName,
         stored_file_name: path.basename(filePath),
-        method_name: parsed?.method_name ?? null,
-        ...(companyId != null
+        method_name: parsed.method_name,
+        ...(resolvedCompanyId != null
           ? {
-              company_id: companyId,
-              pressure_base: pressureBase,
-              pressure_base_factor: pressureBaseFactor,
+              company_id: resolvedCompanyId,
+              pressure_base:
+                pressureBase ?? parsed.pressure_base ?? 0,
+              pressure_base_factor: pressureBaseFactor ?? 0,
             }
-          : {}),
+          : parsed.pressure_base != null
+            ? { pressure_base: parsed.pressure_base }
+            : {}),
         created_by_id: createdById,
       },
       include: IMPORT_RECORD_INCLUDE,
     });
 
-    if (parsed?.results?.length) {
-      const positions = [
-        ...new Set(parsed.results.map((row) => row.analysis_position)),
-      ];
-      const checkins = await tx.sample_checkin.findMany({
-        where: { analysis_position: { in: positions } },
-        select: {
-          analysis_position: true,
-          field_h2s: true,
-          analysis_number: true,
+    await tx.machine_report_results.createMany({
+      data: parsed.components.map((row) => ({
+        import_machine_report_id: created.id,
+        analysis_position: resolvedPosition,
+        sample_time: parsed.analyzed_on,
+        sample_name: parsed.analysis_number,
+        component: row.component,
+        component_description: row.component_description || row.component,
+        method_name: parsed.method_name,
+        normalized_concentration: null,
+        concentration: null,
+        normalized: row.mol_pct,
+        mol_pct: row.mol_pct,
+        wt_pct: row.wt_pct,
+        gpm: row.gpm,
+        dry_gross_ideal: null,
+        wet_sample_ideal: null,
+      })),
+    });
+
+    await insertUserReportAnalysisResultMetrics(tx, {
+      import_machine_report_id: created.id,
+      analysis_position: resolvedPosition,
+      analysisResults: parsed.analysis_results,
+      gpmSummary: parsed.gpm_summary,
+    });
+
+    let linkedSampleCheckinId = null;
+    if (checkin) {
+      await tx.sample_checkin.update({
+        where: { id: checkin.id },
+        data: {
+          import_machine_report_id: created.id,
+          analysis_position: resolvedPosition,
         },
       });
-      const fieldH2sByPosition = buildFieldH2sByPosition(
-        checkins,
-        parsed.results,
-      );
-      const gasComponents = await tx.gas_component_master.findMany({
-        where: { is_active: true },
-      });
-      const componentMasterMap = buildComponentMasterMap(gasComponents);
-      const resultsWithH2s = prependH2sRows(parsed.results, fieldH2sByPosition);
-      const resultsWithDerived = computeDerivedFields(
-        resultsWithH2s,
-        componentMasterMap,
-        pressureBaseFactor ?? 0,
-      );
-      const resultsWithDescriptions = applyComponentDescriptions(
-        resultsWithDerived,
-        componentMasterMap,
-      );
-      const dryGrossIdealByPosition = sumDryGrossIdealByPosition(
-        resultsWithDescriptions,
-      );
-      const wetSampleIdealByPosition = sumWetSampleIdealByPosition(
-        resultsWithDescriptions,
-      );
-      await tx.machine_report_results.createMany({
-        data: resultsWithDescriptions.map((row) => ({
-          import_machine_report_id: created.id,
-          analysis_position: row.analysis_position,
-          sample_time: row.sample_time,
-          sample_name: row.sample_name,
-          component: row.component,
-          component_description: row.component_description,
-          method_name: row.method_name,
-          normalized_concentration: row.normalized_concentration,
-          concentration: row.concentration,
-          normalized: row.normalized,
-          mol_pct: row.mol_pct,
-          wt_pct: row.wt_pct,
-          gpm: row.gpm,
-          dry_gross_ideal: row.dry_gross_ideal,
-          wet_sample_ideal: row.wet_sample_ideal,
-        })),
-      });
-      await insertAnalysisResultMetricsForImport(tx, {
-        import_machine_report_id: created.id,
-        analysis_positions: resultsWithDescriptions.map(
-          (row) => row.analysis_position,
-        ),
-        dryGrossIdealByPosition,
-        wetSampleIdealByPosition,
-      });
+      linkedSampleCheckinId = checkin.id;
     }
 
-    return tx.import_machine_reports.findUnique({
+    const record = await tx.import_machine_reports.findUnique({
       where: { id: created.id },
       include: IMPORT_RECORD_INCLUDE,
     });
+
+    return {
+      record,
+      linked_sample_checkin_id: linkedSampleCheckinId,
+      analysis_number: parsed.analysis_number,
+      analysis_position: resolvedPosition,
+    };
   });
 }
 
-// List import records
+// List user Excel import records only
 router.get("/", async (_req, res) => {
   try {
     const rows = await prisma.import_machine_reports.findMany({
+      where: { source_machine: SOURCE_MACHINE },
       orderBy: { created_at: "desc" },
       include: IMPORT_RECORD_INCLUDE,
     });
-    return res.json(rows.map(mapRecord));
+    return res.json(rows.map((row) => mapRecord(row)));
   } catch (err) {
     return res.status(500).json({
-      error: "Failed to fetch import machine reports",
+      error: "Failed to fetch import user reports",
       detail: prismaErrorDetail(err),
     });
   }
 });
 
-// Upload machine report file
+// Upload user Excel report → existing result/metrics tables
 router.post(
   "/",
-  authorize("import_machine_report"),
+  authorize("import_user_report"),
   upload.single("file"),
   async (req, res) => {
     if (!req.user?.userId) {
@@ -287,80 +266,62 @@ router.post(
       return res.status(400).json({ error: "File is required" });
     }
 
-    const sourceMachine = String(req.body?.source_machine || "").trim();
-    if (!sourceMachine) {
-      if (req.file.path) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: "source_machine is required" });
-    }
-    if (!ALLOWED_SOURCE_MACHINES.includes(sourceMachine)) {
-      if (req.file.path) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: "Invalid source_machine" });
-    }
-
     try {
       const companyId = parseOptionalInt(req.body?.company_id, "company_id");
+      const sampleCheckinId = parseOptionalInt(
+        req.body?.sample_checkin_id,
+        "sample_checkin_id",
+      );
+
       let pressureBase;
       let pressureBaseFactor;
-
       if (companyId != null) {
         const companyPressure = await resolveCompanyPressureSettings(companyId);
         pressureBase = companyPressure.pressureBase;
         pressureBaseFactor = companyPressure.pressureBaseFactor;
       }
 
-      const created = await importMachineReportFromFile({
+      const result = await importUserReportFromFile({
         filePath: req.file.path,
         originalName: req.file.originalname,
-        sourceMachine,
         createdById: Number(req.user.userId),
         companyId,
         pressureBase,
         pressureBaseFactor,
+        sampleCheckinId,
       });
-      return res.status(201).json(mapRecord(created));
+
+      return res.status(201).json(
+        mapRecord(result.record, {
+          linked_sample_checkin_id: result.linked_sample_checkin_id,
+          analysis_number: result.analysis_number,
+          analysis_position: result.analysis_position,
+        }),
+      );
     } catch (err) {
-      if (err?.status === 400) {
-        if (req.file?.path && fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        return res.status(400).json({ error: err.message });
-      }
       if (req.file?.path && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
+      if (err?.status === 400) {
+        return res.status(400).json({ error: err.message });
+      }
       if (err?.name === "PrismaClientValidationError") {
         return res.status(400).json({
-          error: "Invalid machine report import data",
-          detail: err.message,
-        });
-      }
-      if (err instanceof SyntaxError || err.message?.includes("JSON")) {
-        return res.status(400).json({
-          error: "Invalid machine report JSON",
-          detail: err.message,
-        });
-      }
-      if (
-        err.message?.includes("No machine report results") ||
-        err.message?.includes("missing detectors")
-      ) {
-        return res.status(400).json({
-          error: "Invalid machine report JSON",
+          error: "Invalid user report import data",
           detail: err.message,
         });
       }
       return res.status(500).json({
-        error: "Failed to upload machine report",
+        error: "Failed to upload user report",
         detail: prismaErrorDetail(err),
       });
     }
   },
 );
 
-// Update status (archive, validate, etc.)
 router.put(
   "/:id/status",
-  authorize("import_machine_report"),
+  authorize("import_user_report"),
   async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
@@ -373,8 +334,8 @@ router.put(
     }
 
     try {
-      const existing = await prisma.import_machine_reports.findUnique({
-        where: { id },
+      const existing = await prisma.import_machine_reports.findFirst({
+        where: { id, source_machine: SOURCE_MACHINE },
       });
       if (!existing) {
         return res.status(404).json({ error: "Import record not found" });
@@ -395,16 +356,15 @@ router.put(
   },
 );
 
-// Delete import record and stored file
-router.delete("/:id", authorize("import_machine_report"), async (req, res) => {
+router.delete("/:id", authorize("import_user_report"), async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: "Invalid id" });
   }
 
   try {
-    const existing = await prisma.import_machine_reports.findUnique({
-      where: { id },
+    const existing = await prisma.import_machine_reports.findFirst({
+      where: { id, source_machine: SOURCE_MACHINE },
     });
     if (!existing) {
       return res.status(404).json({ error: "Import record not found" });

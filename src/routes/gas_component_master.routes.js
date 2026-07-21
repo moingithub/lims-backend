@@ -15,11 +15,11 @@ function parseRequiredInt(value, fieldName) {
   return num;
 }
 
-function parseOptionalDecimal(value) {
+function parseOptionalDecimal(value, fieldName = "molecular_weight") {
   if (value === undefined || value === null || value === "") return null;
   const num = Number(value);
   if (!Number.isFinite(num)) {
-    const err = new Error("Invalid molecular_weight");
+    const err = new Error(`Invalid ${fieldName}`);
     err.status = 400;
     throw err;
   }
@@ -97,6 +97,8 @@ router.post("/", authorize("gas_component_master"), async (req, res) => {
       display_order,
       is_active,
       molecular_weight,
+      gal_per_lb_mol,
+      gross_heating_value,
       has_gpm,
     } = req.body || {};
 
@@ -110,6 +112,11 @@ router.post("/", authorize("gas_component_master"), async (req, res) => {
         display_order: parseRequiredInt(display_order, "display_order"),
         is_active: typeof is_active === "boolean" ? is_active : true,
         molecular_weight: parseOptionalDecimal(molecular_weight),
+        gal_per_lb_mol: parseOptionalDecimal(gal_per_lb_mol, "gal_per_lb_mol"),
+        gross_heating_value: parseOptionalDecimal(
+          gross_heating_value,
+          "gross_heating_value",
+        ),
         has_gpm: typeof has_gpm === "boolean" ? has_gpm : false,
       },
     });
@@ -149,6 +156,8 @@ router.put("/:id", authorize("gas_component_master"), async (req, res) => {
       display_order,
       is_active,
       molecular_weight,
+      gal_per_lb_mol,
+      gross_heating_value,
       has_gpm,
     } = req.body || {};
 
@@ -185,6 +194,18 @@ router.put("/:id", authorize("gas_component_master"), async (req, res) => {
     }
     if (molecular_weight !== undefined) {
       updateData.molecular_weight = parseOptionalDecimal(molecular_weight);
+    }
+    if (gal_per_lb_mol !== undefined) {
+      updateData.gal_per_lb_mol = parseOptionalDecimal(
+        gal_per_lb_mol,
+        "gal_per_lb_mol",
+      );
+    }
+    if (gross_heating_value !== undefined) {
+      updateData.gross_heating_value = parseOptionalDecimal(
+        gross_heating_value,
+        "gross_heating_value",
+      );
     }
     if (has_gpm !== undefined) {
       updateData.has_gpm = Boolean(has_gpm);

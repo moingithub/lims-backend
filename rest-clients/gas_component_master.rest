@@ -20,6 +20,8 @@ Content-Type: application/json
   "display_order": 1,
   "is_active": true,
   "molecular_weight": 16.0430,
+  "gal_per_lb_mol": null,
+  "gross_heating_value": 1010.0,
   "has_gpm": false
 }
 
@@ -37,6 +39,8 @@ Content-Type: application/json
   "display_order": 2,
   "is_active": true,
   "molecular_weight": 16.0430,
+  "gal_per_lb_mol": null,
+  "gross_heating_value": 1010.0,
   "has_gpm": false,
   "comments": "Updated comments"
 }

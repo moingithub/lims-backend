@@ -12,6 +12,10 @@ Content-Disposition: form-data; name="source_machine"
 
 Inficon GC
 ------FormBoundary
+Content-Disposition: form-data; name="company_id"
+
+1
+------FormBoundary
 Content-Disposition: form-data; name="file"; filename="sample-report.fusion-data"
 Content-Type: application/json
 
@@ -30,6 +34,10 @@ Content-Disposition: form-data; name="source_machine"
 
 Inficon GC
 ------FormBoundary
+Content-Disposition: form-data; name="company_id"
+
+1
+------FormBoundary
 Content-Disposition: form-data; name="file"; filename="sample-report.csv"
 Content-Type: text/csv
 
@@ -45,7 +53,11 @@ Content-Type: text/csv
 #   "source_machine": "Inficon GC",
 #   "status": "Imported",
 #   "file_name": "sample-report.fusion-data",
-#   "method_name": "GPA 2261 C6+",
+#   "method_name": "GPA 1161 C6+",
+#   "company_id": 1,
+#   "company_name": "Natty Gas Lab",
+#   "pressure_base": 0,
+#   "pressure_base_factor": 0,
 #   "result_count": 110,
 #   "uploaded_by": "Admin",
 #   "imported_date_time": "2026-06-13T12:00:00.000Z",

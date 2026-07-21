@@ -89,10 +89,11 @@ function parseMachineReportJson(content) {
             sample_name: positionToName.get(analysis_position) ?? null,
             component,
             method_name,
-            normalized_concentration: numAt(
-              metrics.normalizedConcentration,
-              idx,
-            ),
+            // normalized_concentration: numAt(
+            //   metrics.normalizedConcentration,
+            //   idx,
+            // ),
+            normalized_concentration: null,
             concentration: numAt(metrics.concentration, idx),
           });
         }

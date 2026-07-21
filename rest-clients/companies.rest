@@ -8,7 +8,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "code": "COMP-002",
+  "code": "COMP-003",
   "name": "Acme Corp2",
   "phone": null,
   "email": null,
@@ -17,6 +17,8 @@ Content-Type: application/json
   "billing_address": null,
   "charge_h2_pop_fee": true,
   "h2_pop_fee_rate": 50,
+  "pressure_base": 14.73,
+  "pressure_base_factor": 0.017500,
   "active": true
 }
 
@@ -35,6 +37,8 @@ Content-Type: application/json
   "billing_address": "456 Commerce St, Metropolis",
   "charge_h2_pop_fee": true,
   "h2_pop_fee_rate": 25.00,
+  "pressure_base": 14.696,
+  "pressure_base_factor": 0.017500,
   "active": true
 }
 
