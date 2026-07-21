@@ -51,3 +51,5 @@ npm install
 npx prisma generate
 npx prisma migrate deploy
 # then (re)start the app
+
+-- This is github pull/push test
