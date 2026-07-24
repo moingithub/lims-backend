@@ -90,7 +90,7 @@ Content-Type: application/json
   "sampled_by_lab": false,
   "cylinder_id": 1,
   "cylinder_number": "3001",  
-  "analysis_number": "2026-00003",
+  "analysis_number": "2026-0003",
   "producer": "Demo Producer",
   "well_name": "Well-001",
   "meter_number": "MTR-001",
@@ -99,6 +99,8 @@ Content-Type: application/json
   "pressure": "100",
   "pressure_unit": "PSIA",
   "temperature": "25 C",
+  "sampled_date": "2026-07-03T00:00:00.000Z",
+  "sampled_by": "Omar Rodriguez",
   "field_h2s": 0.0009,
   "pressure_base_factor": 0,
   "cost_code": "CC-001",
@@ -125,7 +127,9 @@ Content-Type: application/json
 {
   "status": "Completed",
   "remarks": "Updated via API",
-  "pressure_base_factor": 0
+  "pressure_base_factor": 0,
+  "sampled_date": "2026-07-03T00:00:00.000Z",
+  "sampled_by": "Omar Rodriguez"
 }
 
 ### Update sample check-in analysis_position and import_machine_report_id

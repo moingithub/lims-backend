@@ -237,6 +237,8 @@ model sample_checkin {
   pressure                 String?
   pressure_unit            String?
   temperature              String?
+  sampled_date             DateTime?
+  sampled_by               String?
   field_h2s                Float                   @default(0)
   pressure_base_factor     Decimal                 @default(0) @db.Decimal(10, 6)
   cost_code                String?

@@ -212,12 +212,27 @@ async function importUserReportFromFile({
 
     let linkedSampleCheckinId = null;
     if (checkin) {
+      const fullCheckin = await tx.sample_checkin.findUnique({
+        where: { id: checkin.id },
+        select: { sampled_by: true, sampled_date: true },
+      });
+      const checkinUpdates = {
+        import_machine_report_id: created.id,
+        analysis_position: resolvedPosition,
+      };
+      // Fill sampler fields from Excel only when check-in does not already have them
+      if (
+        !fullCheckin?.sampled_by &&
+        parsed.sample_information?.sampled_by
+      ) {
+        checkinUpdates.sampled_by = parsed.sample_information.sampled_by;
+      }
+      if (!fullCheckin?.sampled_date && parsed.sample_date) {
+        checkinUpdates.sampled_date = parsed.sample_date;
+      }
       await tx.sample_checkin.update({
         where: { id: checkin.id },
-        data: {
-          import_machine_report_id: created.id,
-          analysis_position: resolvedPosition,
-        },
+        data: checkinUpdates,
       });
       linkedSampleCheckinId = checkin.id;
     }

@@ -26,6 +26,18 @@ function parseOptionalFloat(value) {
   return null;
 }
 
+function parseOptionalDate(value, fieldName = "sampled_date") {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    const err = new Error(`Invalid ${fieldName}`);
+    err.status = 400;
+    throw err;
+  }
+  return date;
+}
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: "uploads/ocr",
@@ -598,6 +610,8 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       pressure,
       pressure_unit,
       temperature,
+      sampled_date,
+      sampled_by,
       field_h2s,
       pressure_base_factor,
       cost_code,
@@ -792,6 +806,15 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
     // const finalWorkOrderNumber = await generateWorkOrderNumber();
 
     const parsedPressureBaseFactor = parseOptionalFloat(pressure_base_factor);
+    let parsedSampledDate;
+    try {
+      parsedSampledDate = parseOptionalDate(sampled_date, "sampled_date");
+    } catch (err) {
+      if (err?.status === 400) {
+        return res.status(400).json({ error: err.message });
+      }
+      throw err;
+    }
 
     const created = await prisma.sample_checkin.create({
       data: {
@@ -815,6 +838,8 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         pressure: pressure ?? null,
         pressure_unit: finalPressureUnit,
         temperature: temperature ?? null,
+        sampled_date: parsedSampledDate ?? null,
+        sampled_by: sampled_by != null ? String(sampled_by).trim() || null : null,
         field_h2s: parseOptionalFloat(field_h2s) ?? 0,
         ...(parsedPressureBaseFactor != null
           ? { pressure_base_factor: parsedPressureBaseFactor }
@@ -981,6 +1006,8 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       pressure,
       pressure_unit,
       temperature,
+      sampled_date,
+      sampled_by,
       field_h2s,
       pressure_base_factor,
       cost_code,
@@ -1127,6 +1154,22 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
     if (producer !== undefined) updates.producer = producer ?? null;
     if (well_name !== undefined) updates.well_name = well_name ?? null;
     if (meter_number !== undefined) updates.meter_number = meter_number ?? null;
+    if (sampled_by !== undefined) {
+      updates.sampled_by =
+        sampled_by == null || sampled_by === ""
+          ? null
+          : String(sampled_by).trim() || null;
+    }
+    if (sampled_date !== undefined) {
+      try {
+        updates.sampled_date = parseOptionalDate(sampled_date, "sampled_date");
+      } catch (err) {
+        if (err?.status === 400) {
+          return res.status(400).json({ error: err.message });
+        }
+        throw err;
+      }
+    }
     if (sample_type !== undefined) {
       const allowedSampleTypes =
         (await getAllowedValuesFromConstraints(

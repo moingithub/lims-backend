@@ -171,8 +171,8 @@ async function buildAnalysisReport(sampleCheckinId) {
       meter_number: blank(checkin.meter_number),
       sample_type: blank(checkin.sample_type),
       remarks: blank(checkin.remarks),
-      sampled_by: "",
-      sample_date: "",
+      sampled_by: blank(checkin.sampled_by),
+      sample_date: formatAnalyzedOn(checkin.sampled_date),
       sample_pressure: formatSamplePressure(
         checkin.pressure,
         checkin.pressure_unit,
