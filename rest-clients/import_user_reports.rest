@@ -19,6 +19,8 @@ Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 
 ------FormBoundary--
 
+# Response includes analyzed_by, base_condition, physical_constant from Report sheet
+
 ### Update import record status (Imported | Validated | Error | Archived)
 PUT {{baseUrl}}/import_user_reports/1/status
 Authorization: Bearer {{authToken}}

@@ -25,11 +25,16 @@ Special field rules:
 - Pressure: do not include psia or psig in Pressure. Pressure must be numeric only.
 - Pressure_Unit: if the original pressure text includes psia or psig, place exactly one of those values here.
 - Field_H2S: return only the numeric H2S value. Do not include ppm or other units.
+- Sample_date: sample/collection date from the form (do not use key "Date").
+- sample_time: sample/collection time of day if present on the form.
+- amb_temp: ambient temperature (AMB Temp) if present on the form.
 Return STRICT JSON only.
 Schema:
 {
   "Lab_Name": "",
-  "Date": "",
+  "Sample_date": "",
+  "sample_time": "",
+  "amb_temp": "",
   "Customer": "",
   "Area": "",
   "Sampled_By": "",
@@ -52,6 +57,29 @@ Schema:
 
 function normalizeOcrOutput(parsedJson) {
   const normalized = { ...parsedJson };
+
+  // Prefer Sample_date; migrate legacy "Date" key from older model responses
+  if (normalized.Sample_date === undefined && normalized.Date !== undefined) {
+    normalized.Sample_date = normalized.Date;
+  }
+  delete normalized.Date;
+  if (normalized.Sample_date === undefined || normalized.Sample_date === null) {
+    normalized.Sample_date = "";
+  } else {
+    normalized.Sample_date = String(normalized.Sample_date).trim();
+  }
+
+  if (normalized.sample_time === undefined || normalized.sample_time === null) {
+    normalized.sample_time = "";
+  } else {
+    normalized.sample_time = String(normalized.sample_time).trim();
+  }
+
+  if (normalized.amb_temp === undefined || normalized.amb_temp === null) {
+    normalized.amb_temp = "";
+  } else {
+    normalized.amb_temp = String(normalized.amb_temp).trim();
+  }
 
   const normalizeNumberOnly = (value) => {
     if (typeof value !== "string") {

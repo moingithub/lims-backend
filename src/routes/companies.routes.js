@@ -5,7 +5,9 @@ const authorize = require("../middleware/authorize");
 const router = express.Router();
 
 function parseOptionalDecimal(value, fieldName) {
-  if (value === undefined || value === null || value === "") return undefined;
+  // undefined = omit field; null/"" = clear to null; otherwise parse number
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
   const num = Number(value);
   if (!Number.isFinite(num)) {
     const err = new Error(`Invalid ${fieldName}`);

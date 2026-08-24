@@ -15,11 +15,52 @@ function blankNumber(value) {
   return Number.isFinite(num) ? num : "";
 }
 
+function sumNumericField(rows, field) {
+  let total = 0;
+  let hasValue = false;
+  for (const row of rows) {
+    const num = Number(row?.[field]);
+    if (!Number.isFinite(num)) continue;
+    total += num;
+    hasValue = true;
+  }
+  if (!hasValue) return "";
+  return total.toFixed(4);
+}
+
+function buildComponentTotals(componentTable) {
+  const rows = Array.isArray(componentTable) ? componentTable : [];
+  return {
+    mole_pct: sumNumericField(rows, "mole_pct"),
+    wt_pct: sumNumericField(rows, "wt_pct"),
+    gpm: sumNumericField(rows, "gpm"),
+  };
+}
+
 function formatSamplePressure(pressure, pressureUnit) {
   const p = blank(pressure);
   if (!p) return "";
   const unit = blank(pressureUnit);
   return unit ? `${p} ${unit}` : p;
+}
+
+function formatSampleTime(value) {
+  if (value == null || value === "") return "";
+  const time = String(value).trim();
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(time);
+  if (!match) return time;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = match[3];
+  if (hours > 23 || minutes > 59 || (seconds != null && Number(seconds) > 59)) {
+    return time;
+  }
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const formattedHours = hours % 12 || 12;
+  const formattedMinutes = `${minutes}`.padStart(2, "0");
+  return `${formattedHours}:${formattedMinutes}${seconds != null ? `:${seconds}` : ""} ${period}`;
 }
 
 function emptyAnalysisMetricGroup() {
@@ -71,6 +112,9 @@ async function fetchMachineReportSection(checkin) {
     return {
       method: "",
       analyzed_on: "",
+      analyzed_by: "",
+      base_condition: "",
+      physical_constant: "",
       component_table: [],
       analysis_results: emptyAnalysisResults(),
     };
@@ -79,7 +123,12 @@ async function fetchMachineReportSection(checkin) {
   const [importReport, rows, gasComponents, metricRows] = await Promise.all([
     prisma.import_machine_reports.findUnique({
       where: { id: importMachineReportId },
-      select: { method_name: true },
+      select: {
+        method_name: true,
+        analyzed_by: true,
+        base_condition: true,
+        physical_constant: true,
+      },
     }),
     prisma.machine_report_results.findMany({
       where: {
@@ -122,8 +171,7 @@ async function fetchMachineReportSection(checkin) {
       return String(a.component).localeCompare(String(b.component));
     })
     .map((row) => ({
-      component:
-        blank(row.component_description) || blank(row.component),
+      component: blank(row.component_description) || blank(row.component),
       mole_pct: blankNumber(row.mol_pct),
       wt_pct: blankNumber(row.wt_pct),
       gpm: blankNumber(row.gpm),
@@ -132,6 +180,9 @@ async function fetchMachineReportSection(checkin) {
   return {
     method,
     analyzed_on: analyzedOn,
+    analyzed_by: blank(importReport?.analyzed_by),
+    base_condition: blank(importReport?.base_condition),
+    physical_constant: blank(importReport?.physical_constant),
     component_table: componentTable,
     analysis_results: buildAnalysisResultsFromMetrics(metricRows),
   };
@@ -163,7 +214,8 @@ async function buildAnalysisReport(sampleCheckinId) {
       analysis_number: blank(checkin.analysis_number),
       cylinder_number: blank(checkin.cylinder_number),
       analyzed_on: machineReport.analyzed_on,
-      analyzed_by: "",
+      analyzed_by:
+        blank(checkin.analyzed_by) || blank(machineReport.analyzed_by),
     },
     sample_information: {
       producer: blank(checkin.producer),
@@ -172,21 +224,28 @@ async function buildAnalysisReport(sampleCheckinId) {
       sample_type: blank(checkin.sample_type),
       remarks: blank(checkin.remarks),
       sampled_by: blank(checkin.sampled_by),
-      sample_date: formatAnalyzedOn(checkin.sampled_date),
+      sample_date: formatAnalyzedOn(checkin.sample_date),
       sample_pressure: formatSamplePressure(
         checkin.pressure,
         checkin.pressure_unit,
       ),
+      pressure_measured: blank(checkin.pressure_measured),
       sample_temperature: blank(checkin.temperature),
+      amb_temp: blank(checkin.amb_temp),
+      sample_time: formatSampleTime(checkin.sample_time),
       sample_method: "",
       field_h2s: blankNumber(checkin.field_h2s),
       flow_rate: blank(checkin.flow_rate),
     },
     base_conditions: {
-      base_condition: "",
-      physical_constant: "",
+      base_condition:
+        blank(checkin.base_condition) || blank(machineReport.base_condition),
+      physical_constant:
+        blank(checkin.physical_constant) ||
+        blank(machineReport.physical_constant),
     },
     component_table: machineReport.component_table,
+    component_totals: buildComponentTotals(machineReport.component_table),
     analysis_results: machineReport.analysis_results,
     gpm_summary: {
       // User Excel imports store C2+/C3+ on the gpm metric dry_real / wet_real
@@ -200,4 +259,6 @@ module.exports = {
   buildAnalysisReport,
   blank,
   blankNumber,
+  buildComponentTotals,
+  formatSampleTime,
 };

@@ -114,8 +114,12 @@ async function resolveCompanyPressureSettings(companyId) {
     throw err;
   }
   return {
-    pressureBase: Number(company.pressure_base),
-    pressureBaseFactor: Number(company.pressure_base_factor),
+    pressureBase:
+      company.pressure_base == null ? null : Number(company.pressure_base),
+    pressureBaseFactor:
+      company.pressure_base_factor == null
+        ? null
+        : Number(company.pressure_base_factor),
   };
 }
 
@@ -138,6 +142,9 @@ function mapRecord(row) {
     status: row.status,
     file_name: row.file_name,
     method_name: row.method_name ?? null,
+    analyzed_by: row.analyzed_by ?? null,
+    base_condition: row.base_condition ?? null,
+    physical_constant: row.physical_constant ?? null,
     company_id: row.company_id ?? null,
     company_name: row.company?.name ?? null,
     pressure_base: row.pressure_base ?? null,
@@ -177,8 +184,10 @@ async function importMachineReportFromFile({
         ...(companyId != null
           ? {
               company_id: companyId,
-              pressure_base: pressureBase,
-              pressure_base_factor: pressureBaseFactor,
+              ...(pressureBase != null ? { pressure_base: pressureBase } : {}),
+              ...(pressureBaseFactor != null
+                ? { pressure_base_factor: pressureBaseFactor }
+                : {}),
             }
           : {}),
         created_by_id: createdById,

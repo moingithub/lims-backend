@@ -78,8 +78,12 @@ async function resolveCompanyPressureSettings(companyId) {
     throw err;
   }
   return {
-    pressureBase: Number(company.pressure_base),
-    pressureBaseFactor: Number(company.pressure_base_factor),
+    pressureBase:
+      company.pressure_base == null ? null : Number(company.pressure_base),
+    pressureBaseFactor:
+      company.pressure_base_factor == null
+        ? null
+        : Number(company.pressure_base_factor),
   };
 }
 
@@ -102,6 +106,9 @@ function mapRecord(row, extras = {}) {
     status: row.status,
     file_name: row.file_name,
     method_name: row.method_name ?? null,
+    analyzed_by: row.analyzed_by ?? null,
+    base_condition: row.base_condition ?? null,
+    physical_constant: row.physical_constant ?? null,
     company_id: row.company_id ?? null,
     company_name: row.company?.name ?? null,
     pressure_base: row.pressure_base ?? null,
@@ -168,12 +175,21 @@ async function importUserReportFromFile({
         file_name: originalName,
         stored_file_name: path.basename(filePath),
         method_name: parsed.method_name,
+        analyzed_by: parsed.analyzed_by || null,
+        base_condition: parsed.base_conditions?.base_condition || null,
+        physical_constant: parsed.base_conditions?.physical_constant || null,
         ...(resolvedCompanyId != null
           ? {
               company_id: resolvedCompanyId,
-              pressure_base:
-                pressureBase ?? parsed.pressure_base ?? 0,
-              pressure_base_factor: pressureBaseFactor ?? 0,
+              ...(pressureBase != null || parsed.pressure_base != null
+                ? {
+                    pressure_base:
+                      pressureBase ?? parsed.pressure_base ?? undefined,
+                  }
+                : {}),
+              ...(pressureBaseFactor != null
+                ? { pressure_base_factor: pressureBaseFactor }
+                : {}),
             }
           : parsed.pressure_base != null
             ? { pressure_base: parsed.pressure_base }
@@ -210,33 +226,6 @@ async function importUserReportFromFile({
       gpmSummary: parsed.gpm_summary,
     });
 
-    let linkedSampleCheckinId = null;
-    if (checkin) {
-      const fullCheckin = await tx.sample_checkin.findUnique({
-        where: { id: checkin.id },
-        select: { sampled_by: true, sampled_date: true },
-      });
-      const checkinUpdates = {
-        import_machine_report_id: created.id,
-        analysis_position: resolvedPosition,
-      };
-      // Fill sampler fields from Excel only when check-in does not already have them
-      if (
-        !fullCheckin?.sampled_by &&
-        parsed.sample_information?.sampled_by
-      ) {
-        checkinUpdates.sampled_by = parsed.sample_information.sampled_by;
-      }
-      if (!fullCheckin?.sampled_date && parsed.sample_date) {
-        checkinUpdates.sampled_date = parsed.sample_date;
-      }
-      await tx.sample_checkin.update({
-        where: { id: checkin.id },
-        data: checkinUpdates,
-      });
-      linkedSampleCheckinId = checkin.id;
-    }
-
     const record = await tx.import_machine_reports.findUnique({
       where: { id: created.id },
       include: IMPORT_RECORD_INCLUDE,
@@ -244,7 +233,7 @@ async function importUserReportFromFile({
 
     return {
       record,
-      linked_sample_checkin_id: linkedSampleCheckinId,
+      matched_sample_checkin_id: checkin?.id ?? null,
       analysis_number: parsed.analysis_number,
       analysis_position: resolvedPosition,
     };
@@ -308,7 +297,7 @@ router.post(
 
       return res.status(201).json(
         mapRecord(result.record, {
-          linked_sample_checkin_id: result.linked_sample_checkin_id,
+          matched_sample_checkin_id: result.matched_sample_checkin_id,
           analysis_number: result.analysis_number,
           analysis_position: result.analysis_position,
         }),

@@ -90,17 +90,23 @@ Content-Type: application/json
   "sampled_by_lab": false,
   "cylinder_id": 1,
   "cylinder_number": "3001",  
-  "analysis_number": "2026-0003",
+  "analysis_number": "2026-00001",
   "producer": "Demo Producer",
   "well_name": "Well-001",
   "meter_number": "MTR-001",
-  "sample_type": "Composite", 
+  "sample_type": "Spot", 
   "flow_rate": "10 scfh",
   "pressure": "100",
   "pressure_unit": "PSIA",
+  "pressure_measured": "98",
   "temperature": "25 C",
-  "sampled_date": "2026-07-03T00:00:00.000Z",
+  "amb_temp": "78 F",
+  "sample_time": "14:30",
+  "sample_date": "2026-07-03T00:00:00.000Z",
   "sampled_by": "Omar Rodriguez",
+  "analyzed_by": "Johannes Xie",
+  "base_condition": "14.65 psia and 60° F",
+  "physical_constant": "GPA 2145-16",
   "field_h2s": 0.0009,
   "pressure_base_factor": 0,
   "cost_code": "CC-001",
@@ -120,7 +126,7 @@ Content-Type: application/json
 }
 
 ### Update sample check-in
-PUT {{baseUrl}}/sample_checkin/4
+PUT {{baseUrl}}/sample_checkin/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
@@ -128,18 +134,25 @@ Content-Type: application/json
   "status": "Completed",
   "remarks": "Updated via API",
   "pressure_base_factor": 0,
-  "sampled_date": "2026-07-03T00:00:00.000Z",
-  "sampled_by": "Omar Rodriguez"
+  "pressure_measured": "98",
+  "amb_temp": "78 F",
+  "sample_time": "14:30",
+  "sample_date": "2026-07-03T00:00:00.000Z",
+  "sampled_by": "Omar Rodriguez",
+  "analyzed_by": "Johannes Xie",
+  "base_condition": "14.65 psia and 60° F",
+  "physical_constant": "GPA 2145-16"
 }
 
-### Update sample check-in analysis_position and import_machine_report_id
+### Update sample check-in analysis_position, import_machine_report_id, pressure_measured
 PUT {{baseUrl}}/sample_checkin/update_analysis_position/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
   "analysis_position": 9,
-  "import_machine_report_id": 6
+  "import_machine_report_id": 6,
+  "pressure_measured": "98"
 }
 
 

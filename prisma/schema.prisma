@@ -54,8 +54,8 @@ model companies {
   billing_address   String?
   charge_h2_pop_fee    Boolean             @default(false)
   h2_pop_fee_rate      Decimal             @default(0) @db.Decimal(12, 2)
-  pressure_base        Decimal             @default(0) @db.Decimal(10, 6)
-  pressure_base_factor Decimal             @default(0) @db.Decimal(10, 6)
+  pressure_base        Decimal?            @db.Decimal(10, 6)
+  pressure_base_factor Decimal?            @db.Decimal(10, 6)
   active               Boolean             @default(true)
   created_by_id     Int?
   created_at        DateTime            @default(now())
@@ -125,6 +125,8 @@ model company_areas {
   area           String
   region         String
   description    String?
+  gl_code        String?
+  pay_key        String?
   active         Boolean            @default(true)
   created_by_id  Int
   created_at     DateTime           @default(now())
@@ -236,9 +238,15 @@ model sample_checkin {
   flow_rate                String?
   pressure                 String?
   pressure_unit            String?
+  pressure_measured        String?
   temperature              String?
-  sampled_date             DateTime?
+  amb_temp                 String?
+  sample_time              String?
+  sample_date              DateTime?
   sampled_by               String?
+  analyzed_by              String?
+  base_condition           String?
+  physical_constant        String?
   field_h2s                Float                   @default(0)
   pressure_base_factor     Decimal                 @default(0) @db.Decimal(10, 6)
   cost_code                String?
@@ -362,6 +370,9 @@ model import_machine_reports {
   file_name             String
   stored_file_name      String
   method_name           String?
+  analyzed_by           String?
+  base_condition        String?
+  physical_constant     String?
   company_id            Int?
   pressure_base         Decimal                   @default(0) @db.Decimal(10, 6)
   pressure_base_factor  Decimal                   @default(0) @db.Decimal(10, 6)

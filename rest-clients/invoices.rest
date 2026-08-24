@@ -51,11 +51,11 @@ GET {{baseUrl}}/invoices
 Authorization: Bearer {{authToken}}
 
 ### Get Invoice by ID
-GET {{baseUrl}}/invoices/4
+GET {{baseUrl}}/invoices/1
 Authorization: Bearer {{authToken}}
 
 ### Update Invoice
-PUT {{baseUrl}}/invoices/4
+PUT {{baseUrl}}/invoices/
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

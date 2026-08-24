@@ -60,7 +60,8 @@ router.post("/", authorize("company_areas"), async (req, res) => {
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: "Login required" });
     }
-    const { company_id, area, region, description, active } = req.body || {};
+    const { company_id, area, region, description, gl_code, pay_key, active } =
+      req.body || {};
 
     if (!area || !region) {
       return res.status(400).json({ error: "Area and region are required" });
@@ -91,7 +92,9 @@ router.post("/", authorize("company_areas"), async (req, res) => {
         company: { connect: { id: companyId } },
         area,
         region,
-        description,
+        description: description ?? null,
+        gl_code: gl_code != null && gl_code !== "" ? String(gl_code).trim() : null,
+        pay_key: pay_key != null && pay_key !== "" ? String(pay_key).trim() : null,
         active: typeof active === "boolean" ? active : true,
         created_by:
           req.user && req.user.userId
@@ -142,7 +145,8 @@ router.put("/:id", authorize("company_areas"), async (req, res) => {
       }
     }
 
-    const { company_id, area, region, description, active } = req.body || {};
+    const { company_id, area, region, description, gl_code, pay_key, active } =
+      req.body || {};
 
     // If changing company_id, validate
     if (company_id !== undefined && company_id !== null) {
@@ -172,6 +176,22 @@ router.put("/:id", authorize("company_areas"), async (req, res) => {
         ...(area !== undefined ? { area } : {}),
         ...(region !== undefined ? { region } : {}),
         ...(description !== undefined ? { description } : {}),
+        ...(gl_code !== undefined
+          ? {
+              gl_code:
+                gl_code == null || gl_code === ""
+                  ? null
+                  : String(gl_code).trim(),
+            }
+          : {}),
+        ...(pay_key !== undefined
+          ? {
+              pay_key:
+                pay_key == null || pay_key === ""
+                  ? null
+                  : String(pay_key).trim(),
+            }
+          : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),
       },
     });

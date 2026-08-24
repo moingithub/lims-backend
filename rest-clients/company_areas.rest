@@ -12,6 +12,8 @@ Content-Type: application/json
   "area": "South-West",
   "region": "SW",
   "description": "South region area",
+  "gl_code": "GL-1001",
+  "pay_key": "PAY-SW",
   "active": true
 }
 
@@ -28,6 +30,8 @@ Content-Type: application/json
   "area": "North-East",
   "region": "NE",
   "description": "Updated description",
+  "gl_code": "GL-2002",
+  "pay_key": "PAY-NE",
   "active": true
 }
 

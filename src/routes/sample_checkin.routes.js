@@ -26,7 +26,7 @@ function parseOptionalFloat(value) {
   return null;
 }
 
-function parseOptionalDate(value, fieldName = "sampled_date") {
+function parseOptionalDate(value, fieldName = "sample_date") {
   if (value === undefined) return undefined;
   if (value === null || value === "") return null;
   const date = value instanceof Date ? value : new Date(value);
@@ -609,9 +609,15 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       flow_rate,
       pressure,
       pressure_unit,
+      pressure_measured,
       temperature,
-      sampled_date,
+      amb_temp,
+      sample_time,
+      sample_date,
       sampled_by,
+      analyzed_by,
+      base_condition,
+      physical_constant,
       field_h2s,
       pressure_base_factor,
       cost_code,
@@ -806,9 +812,9 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
     // const finalWorkOrderNumber = await generateWorkOrderNumber();
 
     const parsedPressureBaseFactor = parseOptionalFloat(pressure_base_factor);
-    let parsedSampledDate;
+    let parsedSampleDate;
     try {
-      parsedSampledDate = parseOptionalDate(sampled_date, "sampled_date");
+      parsedSampleDate = parseOptionalDate(sample_date, "sample_date");
     } catch (err) {
       if (err?.status === 400) {
         return res.status(400).json({ error: err.message });
@@ -837,9 +843,27 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         flow_rate: flow_rate ?? null,
         pressure: pressure ?? null,
         pressure_unit: finalPressureUnit,
+        pressure_measured:
+          pressure_measured != null
+            ? String(pressure_measured).trim() || null
+            : null,
         temperature: temperature ?? null,
-        sampled_date: parsedSampledDate ?? null,
+        amb_temp:
+          amb_temp != null ? String(amb_temp).trim() || null : null,
+        sample_time:
+          sample_time != null ? String(sample_time).trim() || null : null,
+        sample_date: parsedSampleDate ?? null,
         sampled_by: sampled_by != null ? String(sampled_by).trim() || null : null,
+        analyzed_by:
+          analyzed_by != null ? String(analyzed_by).trim() || null : null,
+        base_condition:
+          base_condition != null
+            ? String(base_condition).trim() || null
+            : null,
+        physical_constant:
+          physical_constant != null
+            ? String(physical_constant).trim() || null
+            : null,
         field_h2s: parseOptionalFloat(field_h2s) ?? 0,
         ...(parsedPressureBaseFactor != null
           ? { pressure_base_factor: parsedPressureBaseFactor }
@@ -877,7 +901,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
   }
 });
 
-// Update analysis_position and/or import_machine_report_id
+// Update analysis_position, import_machine_report_id, and/or pressure_measured
 router.put(
   "/update_analysis_position/:id",
   authorize("sample_checkin"),
@@ -886,14 +910,16 @@ router.put(
     if (!Number.isInteger(id) || id <= 0)
       return res.status(400).json({ error: "Invalid id" });
 
-    const { analysis_position, import_machine_report_id } = req.body || {};
+    const { analysis_position, import_machine_report_id, pressure_measured } =
+      req.body || {};
     if (
       analysis_position === undefined &&
-      import_machine_report_id === undefined
+      import_machine_report_id === undefined &&
+      pressure_measured === undefined
     ) {
       return res.status(400).json({
         error:
-          "At least one of analysis_position or import_machine_report_id is required",
+          "At least one of analysis_position, import_machine_report_id, or pressure_measured is required",
       });
     }
 
@@ -932,6 +958,13 @@ router.put(
         }
         updates.import_machine_report_id = reportId;
       }
+    }
+
+    if (pressure_measured !== undefined) {
+      updates.pressure_measured =
+        pressure_measured == null || pressure_measured === ""
+          ? null
+          : String(pressure_measured).trim() || null;
     }
 
     try {
@@ -1005,9 +1038,15 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       flow_rate,
       pressure,
       pressure_unit,
+      pressure_measured,
       temperature,
-      sampled_date,
+      amb_temp,
+      sample_time,
+      sample_date,
       sampled_by,
+      analyzed_by,
+      base_condition,
+      physical_constant,
       field_h2s,
       pressure_base_factor,
       cost_code,
@@ -1160,15 +1199,45 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
           ? null
           : String(sampled_by).trim() || null;
     }
-    if (sampled_date !== undefined) {
+    if (amb_temp !== undefined) {
+      updates.amb_temp =
+        amb_temp == null || amb_temp === ""
+          ? null
+          : String(amb_temp).trim() || null;
+    }
+    if (sample_time !== undefined) {
+      updates.sample_time =
+        sample_time == null || sample_time === ""
+          ? null
+          : String(sample_time).trim() || null;
+    }
+    if (sample_date !== undefined) {
       try {
-        updates.sampled_date = parseOptionalDate(sampled_date, "sampled_date");
+        updates.sample_date = parseOptionalDate(sample_date, "sample_date");
       } catch (err) {
         if (err?.status === 400) {
           return res.status(400).json({ error: err.message });
         }
         throw err;
       }
+    }
+    if (analyzed_by !== undefined) {
+      updates.analyzed_by =
+        analyzed_by == null || analyzed_by === ""
+          ? null
+          : String(analyzed_by).trim() || null;
+    }
+    if (base_condition !== undefined) {
+      updates.base_condition =
+        base_condition == null || base_condition === ""
+          ? null
+          : String(base_condition).trim() || null;
+    }
+    if (physical_constant !== undefined) {
+      updates.physical_constant =
+        physical_constant == null || physical_constant === ""
+          ? null
+          : String(physical_constant).trim() || null;
     }
     if (sample_type !== undefined) {
       const allowedSampleTypes =
@@ -1213,6 +1282,12 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
         });
       }
       updates.pressure_unit = finalPressureUnit;
+    }
+    if (pressure_measured !== undefined) {
+      updates.pressure_measured =
+        pressure_measured == null || pressure_measured === ""
+          ? null
+          : String(pressure_measured).trim() || null;
     }
     if (temperature !== undefined) updates.temperature = temperature ?? null;
     if (field_h2s !== undefined) {

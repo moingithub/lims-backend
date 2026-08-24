@@ -2,14 +2,14 @@
 GET {{baseUrl}}/companies
 Authorization: Bearer {{authToken}}
 
-### Create company
+### Create company (pressure fields optional)
 POST {{baseUrl}}/companies
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "code": "COMP-003",
-  "name": "Acme Corp2",
+  "code": "COMP-005",
+  "name": "Acme Corp5",
   "phone": null,
   "email": null,
   "billing_ref": null,
@@ -19,6 +19,17 @@ Content-Type: application/json
   "h2_pop_fee_rate": 50,
   "pressure_base": 14.73,
   "pressure_base_factor": 0.017500,
+  "active": true
+}
+
+### Create company without pressure fields
+POST {{baseUrl}}/companies
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "code": "COMP-004",
+  "name": "Acme Corp3",
   "active": true
 }
 
@@ -40,6 +51,16 @@ Content-Type: application/json
   "pressure_base": 14.696,
   "pressure_base_factor": 0.017500,
   "active": true
+}
+
+### Clear company pressure fields
+PUT {{baseUrl}}/companies/2
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "pressure_base": null,
+  "pressure_base_factor": null
 }
 
 ### Delete company
