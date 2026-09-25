@@ -42,6 +42,10 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/sample_checkin/2
 Authorization: Bearer {{authToken}}
 
+### Download populated analysis report by sample check-in id
+GET {{baseUrl}}/sample_checkin/3/analysis-report/download
+Authorization: Bearer {{authToken}}
+
 ### Upload OCR file for sample check-in
 POST {{baseUrl}}/sample_checkin/ocr
 Authorization: Bearer {{authToken}}
@@ -103,8 +107,16 @@ Content-Type: application/json
   "amb_temp": "78 F",
   "sample_time": "14:30",
   "sample_date": "2026-07-03T00:00:00.000Z",
+  "instrument": "Inficon 1 GC",
+  "last_instrument_verification": "25-10-2026",
+  "heating_method": "Oven & Heat Trace",
+  "hexanes_split": "60/30/10 (C6/C7/C8)",
+  "sample_method": "Purge & Fill",
+  "effective_start_date": "01-05-2026",
+  "effective_end_date": "31-05-2026",
   "sampled_by": "Omar Rodriguez",
   "analyzed_by": "Johannes Xie",
+  "authorized_by": "John Miller",
   "base_condition": "14.65 psia and 60° F",
   "physical_constant": "GPA 2145-16",
   "field_h2s": 0.0009,
@@ -138,20 +150,28 @@ Content-Type: application/json
   "amb_temp": "78 F",
   "sample_time": "14:30",
   "sample_date": "2026-07-03T00:00:00.000Z",
+  "instrument": "Inficon 1 GC",
+  "last_instrument_verification": "25-10-2026",
+  "heating_method": "Oven & Heat Trace",
+  "hexanes_split": "60/30/10 (C6/C7/C8)",
+  "sample_method": "Purge & Fill",
+  "effective_start_date": "01-05-2026",
+  "effective_end_date": "31-05-2026",
   "sampled_by": "Omar Rodriguez",
   "analyzed_by": "Johannes Xie",
+  "authorized_by": "John Miller",
   "base_condition": "14.65 psia and 60° F",
   "physical_constant": "GPA 2145-16"
 }
 
 ### Update sample check-in analysis_position, import_machine_report_id, pressure_measured
-PUT {{baseUrl}}/sample_checkin/update_analysis_position/1
+PUT {{baseUrl}}/sample_checkin/update_analysis_position/4
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "analysis_position": 9,
-  "import_machine_report_id": 6,
+  "analysis_position": 1,
+  "import_machine_report_id": 8,
   "pressure_measured": "98"
 }
 

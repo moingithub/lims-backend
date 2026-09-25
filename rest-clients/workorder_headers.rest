@@ -17,7 +17,7 @@ Content-Type: application/json
 {
   "company_id": 1,
   "work_order_date": "2026-01-01T00:00:00.000Z",
-  "work_order_number": "WO-964806",
+  "work_order_number": "WO-2026-0005",
   "cylinders":2,
   "mileage_fee": 10.00,
   "miscellaneous_charges": 5.00,

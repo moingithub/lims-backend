@@ -58,6 +58,10 @@ function toString(value) {
 /** Excel serial date (1900 system) → Date, or pass through Date */
 function excelSerialToDate(value) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = new Date(value.trim());
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
   const serial = toNumber(value);
   if (serial == null) return null;
   // Excel epoch: 1899-12-30 (accounts for Excel's 1900 leap-year bug offset)
@@ -98,9 +102,16 @@ async function parseUserReportExcel(filePath) {
   const analyzedOn = excelSerialToDate(cellValue(ws, "E8"));
   const analyzedBy = toString(cellValue(ws, "E10"));
   const sampleDate = excelSerialToDate(cellValue(ws, "G14"));
+  const instrument = toString(cellValue(ws, "C16"));
+  const lastInstrumentVerification = excelSerialToDate(cellValue(ws, "C17"));
+  const heatingMethod = toString(cellValue(ws, "C18"));
+  const hexanesSplit = toString(cellValue(ws, "C19"));
+  const sampleMethod = toString(cellValue(ws, "G19"));
+  const effectiveStartDate = excelSerialToDate(cellValue(ws, "G20"));
+  const effectiveEndDate = excelSerialToDate(cellValue(ws, "I20"));
 
   const components = [];
-  for (let row = 25; row <= 35; row += 1) {
+  for (let row = 26; row <= 36; row += 1) {
     const label = toString(cellValue(ws, `A${row}`));
     if (!label) continue;
     const code = resolveComponentCode(label);
@@ -120,8 +131,8 @@ async function parseUserReportExcel(filePath) {
     throw err;
   }
 
-  const baseConditionText = toString(cellValue(ws, "A21"));
-  const physicalConstantText = toString(cellValue(ws, "E21"));
+  const baseConditionText = toString(cellValue(ws, "A22"));
+  const physicalConstantText = toString(cellValue(ws, "E22"));
 
   return {
     source_machine: SOURCE_MACHINE,
@@ -142,14 +153,23 @@ async function parseUserReportExcel(filePath) {
       producer: toString(cellValue(ws, "C13")),
       well_lease: toString(cellValue(ws, "C14")),
       meter_number: toString(cellValue(ws, "C15")),
-      sample_type: toString(cellValue(ws, "C16")),
+      sample_type: toString(cellValue(ws, "I19")),
+      instrument,
+      last_instrument_verification: lastInstrumentVerification,
+      heating_method: heatingMethod,
+      hexanes_split: hexanesSplit,
+      sample_method: sampleMethod,
+      effective_start_date: effectiveStartDate,
+      effective_end_date: effectiveEndDate,
       sampled_by: toString(cellValue(ws, "G13")),
       sample_pressure: toNumber(cellValue(ws, "G15")),
       sample_pressure_unit: toString(cellValue(ws, "H15")) || null,
       sample_temperature: toString(cellValue(ws, "G16")),
-      sample_method: toString(cellValue(ws, "G17")),
       field_h2s: toNumber(cellValue(ws, "I17")),
-      flow_rate: [toString(cellValue(ws, "F18")), toString(cellValue(ws, "G18"))]
+      flow_rate: [
+        toString(cellValue(ws, "F18")),
+        toString(cellValue(ws, "G18")),
+      ]
         .filter(Boolean)
         .join(" "),
     },

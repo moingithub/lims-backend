@@ -60,11 +60,20 @@ router.post("/", authorize("company_areas"), async (req, res) => {
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: "Login required" });
     }
-    const { company_id, area, region, description, gl_code, pay_key, active } =
-      req.body || {};
+    const {
+      company_id,
+      area,
+      description,
+      gl_code,
+      pay_key,
+      po,
+      authorized_by,
+      cost_code,
+      active,
+    } = req.body || {};
 
-    if (!area || !region) {
-      return res.status(400).json({ error: "Area and region are required" });
+    if (!area) {
+      return res.status(400).json({ error: "Area is required" });
     }
 
     let companyIdToUse = company_id;
@@ -91,10 +100,20 @@ router.post("/", authorize("company_areas"), async (req, res) => {
       data: {
         company: { connect: { id: companyId } },
         area,
-        region,
         description: description ?? null,
-        gl_code: gl_code != null && gl_code !== "" ? String(gl_code).trim() : null,
-        pay_key: pay_key != null && pay_key !== "" ? String(pay_key).trim() : null,
+        gl_code:
+          gl_code != null && gl_code !== "" ? String(gl_code).trim() : null,
+        pay_key:
+          pay_key != null && pay_key !== "" ? String(pay_key).trim() : null,
+        po: po != null && po !== "" ? String(po).trim() : null,
+        authorized_by:
+          authorized_by != null && authorized_by !== ""
+            ? String(authorized_by).trim()
+            : null,
+        cost_code:
+          cost_code != null && cost_code !== ""
+            ? String(cost_code).trim()
+            : null,
         active: typeof active === "boolean" ? active : true,
         created_by:
           req.user && req.user.userId
@@ -145,8 +164,17 @@ router.put("/:id", authorize("company_areas"), async (req, res) => {
       }
     }
 
-    const { company_id, area, region, description, gl_code, pay_key, active } =
-      req.body || {};
+    const {
+      company_id,
+      area,
+      description,
+      gl_code,
+      pay_key,
+      po,
+      authorized_by,
+      cost_code,
+      active,
+    } = req.body || {};
 
     // If changing company_id, validate
     if (company_id !== undefined && company_id !== null) {
@@ -174,7 +202,6 @@ router.put("/:id", authorize("company_areas"), async (req, res) => {
           ? { company: { connect: { id: Number(company_id) } } }
           : {}),
         ...(area !== undefined ? { area } : {}),
-        ...(region !== undefined ? { region } : {}),
         ...(description !== undefined ? { description } : {}),
         ...(gl_code !== undefined
           ? {
@@ -190,6 +217,27 @@ router.put("/:id", authorize("company_areas"), async (req, res) => {
                 pay_key == null || pay_key === ""
                   ? null
                   : String(pay_key).trim(),
+            }
+          : {}),
+        ...(po !== undefined
+          ? {
+              po: po == null || po === "" ? null : String(po).trim(),
+            }
+          : {}),
+        ...(authorized_by !== undefined
+          ? {
+              authorized_by:
+                authorized_by == null || authorized_by === ""
+                  ? null
+                  : String(authorized_by).trim(),
+            }
+          : {}),
+        ...(cost_code !== undefined
+          ? {
+              cost_code:
+                cost_code == null || cost_code === ""
+                  ? null
+                  : String(cost_code).trim(),
             }
           : {}),
         ...(active !== undefined ? { active: Boolean(active) } : {}),

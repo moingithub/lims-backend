@@ -10,10 +10,12 @@ Content-Type: application/json
 {
   "company_id": 1,
   "area": "South-West",
-  "region": "SW",
   "description": "South region area",
   "gl_code": "GL-1001",
   "pay_key": "PAY-SW",
+  "po": "PO-1001",
+  "authorized_by": "Jane Smith",
+  "cost_code": "CC-1001",
   "active": true
 }
 
@@ -28,10 +30,12 @@ Content-Type: application/json
 
 {
   "area": "North-East",
-  "region": "NE",
   "description": "Updated description",
   "gl_code": "GL-2002",
   "pay_key": "PAY-NE",
+  "po": "PO-2002",
+  "authorized_by": "John Doe",
+  "cost_code": "CC-2002",
   "active": true
 }
 

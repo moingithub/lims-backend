@@ -12,6 +12,7 @@ const {
 const {
   insertUserReportAnalysisResultMetrics,
 } = require("../lib/insertAnalysisResultMetrics");
+const { removeCalculationChain } = require("../lib/sanitizeExcelWorkbook");
 
 const router = express.Router();
 
@@ -64,6 +65,24 @@ function parseOptionalInt(value, fieldName) {
   return num;
 }
 
+function parseOptionalDate(value, fieldName) {
+  if (value === undefined || value === null || value === "") return null;
+  const match = String(value)
+    .trim()
+    .match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  const date = match
+    ? new Date(
+        Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1])),
+      )
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    const err = new Error(`Invalid ${fieldName}`);
+    err.status = 400;
+    throw err;
+  }
+  return date;
+}
+
 async function resolveCompanyPressureSettings(companyId) {
   const company = await prisma.companies.findUnique({
     where: { id: companyId },
@@ -109,6 +128,13 @@ function mapRecord(row, extras = {}) {
     analyzed_by: row.analyzed_by ?? null,
     base_condition: row.base_condition ?? null,
     physical_constant: row.physical_constant ?? null,
+    instrument: row.instrument ?? null,
+    last_instrument_verification: row.last_instrument_verification ?? null,
+    heating_method: row.heating_method ?? null,
+    hexanes_split: row.hexanes_split ?? null,
+    sample_method: row.sample_method ?? null,
+    effective_start_date: row.effective_start_date ?? null,
+    effective_end_date: row.effective_end_date ?? null,
     company_id: row.company_id ?? null,
     company_name: row.company?.name ?? null,
     pressure_base: row.pressure_base ?? null,
@@ -129,6 +155,13 @@ async function importUserReportFromFile({
   pressureBase,
   pressureBaseFactor,
   sampleCheckinId,
+  instrument,
+  lastInstrumentVerification,
+  heatingMethod,
+  hexanesSplit,
+  sampleMethod,
+  effectiveStartDate,
+  effectiveEndDate,
 }) {
   const parsed = await parseUserReportExcel(filePath);
   const analysisPosition =
@@ -178,6 +211,26 @@ async function importUserReportFromFile({
         analyzed_by: parsed.analyzed_by || null,
         base_condition: parsed.base_conditions?.base_condition || null,
         physical_constant: parsed.base_conditions?.physical_constant || null,
+        instrument: instrument || parsed.sample_information?.instrument || null,
+        last_instrument_verification: parseOptionalDate(
+          lastInstrumentVerification ||
+            parsed.sample_information?.last_instrument_verification,
+          "last_instrument_verification",
+        ),
+        heating_method:
+          heatingMethod || parsed.sample_information?.heating_method || null,
+        hexanes_split:
+          hexanesSplit || parsed.sample_information?.hexanes_split || null,
+        sample_method:
+          sampleMethod || parsed.sample_information?.sample_method || null,
+        effective_start_date: parseOptionalDate(
+          effectiveStartDate || parsed.sample_information?.effective_start_date,
+          "effective_start_date",
+        ),
+        effective_end_date: parseOptionalDate(
+          effectiveEndDate || parsed.sample_information?.effective_end_date,
+          "effective_end_date",
+        ),
         ...(resolvedCompanyId != null
           ? {
               company_id: resolvedCompanyId,
@@ -271,6 +324,7 @@ router.post(
     }
 
     try {
+      await removeCalculationChain(req.file.path);
       const companyId = parseOptionalInt(req.body?.company_id, "company_id");
       const sampleCheckinId = parseOptionalInt(
         req.body?.sample_checkin_id,
@@ -293,6 +347,13 @@ router.post(
         pressureBase,
         pressureBaseFactor,
         sampleCheckinId,
+        instrument: req.body?.instrument,
+        lastInstrumentVerification: req.body?.last_instrument_verification,
+        heatingMethod: req.body?.heating_method,
+        hexanesSplit: req.body?.hexanes_split,
+        sampleMethod: req.body?.sample_method,
+        effectiveStartDate: req.body?.effective_start_date,
+        effectiveEndDate: req.body?.effective_end_date,
       });
 
       return res.status(201).json(
@@ -323,8 +384,8 @@ router.post(
   },
 );
 
-router.put(
-  "/:id/status",
+router.get(
+  "/:id/download",
   authorize("import_user_report"),
   async (req, res) => {
     const id = Number(req.params.id);
@@ -332,33 +393,70 @@ router.put(
       return res.status(400).json({ error: "Invalid id" });
     }
 
-    const status = String(req.body?.status || "").trim();
-    if (!VALID_STATUSES.has(status)) {
-      return res.status(400).json({ error: "Invalid status" });
-    }
-
     try {
       const existing = await prisma.import_machine_reports.findFirst({
         where: { id, source_machine: SOURCE_MACHINE },
+        select: { stored_file_name: true },
       });
       if (!existing) {
         return res.status(404).json({ error: "Import record not found" });
       }
 
-      const updated = await prisma.import_machine_reports.update({
-        where: { id },
-        data: { status },
-        include: IMPORT_RECORD_INCLUDE,
+      const filePath = path.join(UPLOAD_DIR, existing.stored_file_name);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Stored file not found" });
+      }
+
+      await removeCalculationChain(filePath);
+      return res.download(filePath, existing.stored_file_name, (err) => {
+        if (err && !res.headersSent) {
+          return res.status(500).json({
+            error: "Failed to download import file",
+            detail: prismaErrorDetail(err),
+          });
+        }
       });
-      return res.json(mapRecord(updated));
     } catch (err) {
       return res.status(500).json({
-        error: "Failed to update import record status",
+        error: "Failed to download import file",
         detail: prismaErrorDetail(err),
       });
     }
   },
 );
+
+router.put("/:id/status", authorize("import_user_report"), async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: "Invalid id" });
+  }
+
+  const status = String(req.body?.status || "").trim();
+  if (!VALID_STATUSES.has(status)) {
+    return res.status(400).json({ error: "Invalid status" });
+  }
+
+  try {
+    const existing = await prisma.import_machine_reports.findFirst({
+      where: { id, source_machine: SOURCE_MACHINE },
+    });
+    if (!existing) {
+      return res.status(404).json({ error: "Import record not found" });
+    }
+
+    const updated = await prisma.import_machine_reports.update({
+      where: { id },
+      data: { status },
+      include: IMPORT_RECORD_INCLUDE,
+    });
+    return res.json(mapRecord(updated));
+  } catch (err) {
+    return res.status(500).json({
+      error: "Failed to update import record status",
+      detail: prismaErrorDetail(err),
+    });
+  }
+});
 
 router.delete("/:id", authorize("import_user_report"), async (req, res) => {
   const id = Number(req.params.id);

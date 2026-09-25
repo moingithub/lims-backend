@@ -16,6 +16,34 @@ Content-Disposition: form-data; name="company_id"
 
 1
 ------FormBoundary
+Content-Disposition: form-data; name="instrument"
+
+Inficon 1 GC
+------FormBoundary
+Content-Disposition: form-data; name="last_instrument_verification"
+
+25-10-2026
+------FormBoundary
+Content-Disposition: form-data; name="heating_method"
+
+Oven & Heat Trace
+------FormBoundary
+Content-Disposition: form-data; name="hexanes_split"
+
+60/30/10 (C6/C7/C8)
+------FormBoundary
+Content-Disposition: form-data; name="sample_method"
+
+Purge & Fill
+------FormBoundary
+Content-Disposition: form-data; name="effective_start_date"
+
+01-05-2026
+------FormBoundary
+Content-Disposition: form-data; name="effective_end_date"
+
+31-05-2026
+------FormBoundary
 Content-Disposition: form-data; name="file"; filename="sample-report.fusion-data"
 Content-Type: application/json
 
@@ -57,6 +85,13 @@ Content-Type: text/csv
 #   "analyzed_by": null,
 #   "base_condition": null,
 #   "physical_constant": null,
+#   "instrument": "Inficon 1 GC",
+#   "last_instrument_verification": "2026-10-25T00:00:00.000Z",
+#   "heating_method": "Oven & Heat Trace",
+#   "hexanes_split": "60/30/10 (C6/C7/C8)",
+#   "sample_method": "Purge & Fill",
+#   "effective_start_date": "2026-05-01T00:00:00.000Z",
+#   "effective_end_date": "2026-05-31T00:00:00.000Z",
 #   "company_id": 1,
 #   "company_name": "Natty Gas Lab",
 #   "pressure_base": 0,
@@ -66,6 +101,10 @@ Content-Type: text/csv
 #   "imported_date_time": "2026-06-13T12:00:00.000Z",
 #   "created_by": 1
 # }
+
+### Download stored machine report file
+GET {{baseUrl}}/import_machine_reports/8/download
+Authorization: Bearer {{authToken}}
 
 ### Update import record status (Imported | Validated | Error | Archived)
 PUT {{baseUrl}}/import_machine_reports/1/status

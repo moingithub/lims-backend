@@ -5,6 +5,9 @@ const Tesseract = require("tesseract.js");
 const path = require("path");
 const fs = require("fs");
 const { runGeminiOcr } = require("../lib/geminiocr"); // adjust path as needed
+const {
+  createAnalysisReportWorkbook,
+} = require("../lib/exportAnalysisReportWorkbook");
 
 const {
   prisma,
@@ -13,6 +16,7 @@ const {
   normalizeToAllowed,
 } = require("../lib/common");
 const authorize = require("../middleware/authorize");
+const logger = require("../lib/logger");
 
 function parseOptionalFloat(value) {
   if (value === undefined || value === null || value === "") return null;
@@ -29,7 +33,23 @@ function parseOptionalFloat(value) {
 function parseOptionalDate(value, fieldName = "sample_date") {
   if (value === undefined) return undefined;
   if (value === null || value === "") return null;
-  const date = value instanceof Date ? value : new Date(value);
+  let date;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === "string") {
+    const dayMonthYear = value.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    date = dayMonthYear
+      ? new Date(
+          Date.UTC(
+            Number(dayMonthYear[3]),
+            Number(dayMonthYear[2]) - 1,
+            Number(dayMonthYear[1]),
+          ),
+        )
+      : new Date(value);
+  } else {
+    date = new Date(value);
+  }
   if (Number.isNaN(date.getTime())) {
     const err = new Error(`Invalid ${fieldName}`);
     err.status = 400;
@@ -403,7 +423,7 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         spot_composite_fee: true,
         analysis_type_id: true,
         area_id: true,
-        company_area: { select: { area: true, region: true } },
+        company_area: { select: { area: true } },
         analysis_pricing: { select: { analysis_type: true } },
       },
     });
@@ -428,7 +448,6 @@ router.get("/workorders/by-number/:work_order_number", async (req, res) => {
         sample_type: item.sample_type ?? null,
         area_id: item.area_id ?? null,
         area: item.company_area?.area ?? null,
-        area_region: item.company_area?.region ?? null,
         analysis_type_id: item.analysis_type_id ?? null,
         analysis_type: item.analysis_pricing?.analysis_type ?? null,
         standard_rate: toNumber(item.standard_rate),
@@ -511,7 +530,9 @@ router.get("/analysis_positions", async (req, res) => {
     if (req.query.import_machine_report_id !== undefined) {
       const reportId = Number(req.query.import_machine_report_id);
       if (!Number.isInteger(reportId) || reportId <= 0) {
-        return res.status(400).json({ error: "Invalid import_machine_report_id" });
+        return res
+          .status(400)
+          .json({ error: "Invalid import_machine_report_id" });
       }
       where.import_machine_report_id = reportId;
     }
@@ -555,12 +576,53 @@ router.get("/analysis_positions/:sample_checkin_id", async (req, res) => {
       select: SAMPLE_ANALYSIS_POSITION_SELECT,
     });
     if (!item)
-      return res.status(404).json({ error: "Sample analysis position not found" });
+      return res
+        .status(404)
+        .json({ error: "Sample analysis position not found" });
     return res.json(item);
   } catch (err) {
     return res.status(500).json({
       error: "Failed to fetch sample analysis position",
       detail: err.message,
+    });
+  }
+});
+
+// Download a populated copy of the analysis report template.
+router.get("/:sampleCheckinId/analysis-report/download", async (req, res) => {
+  const sampleCheckinId = Number(req.params.sampleCheckinId);
+  if (!Number.isInteger(sampleCheckinId) || sampleCheckinId <= 0) {
+    return res.status(400).json({ error: "Invalid sampleCheckinId" });
+  }
+
+  try {
+    const existing = await prisma.sample_checkin.findUnique({
+      where: { id: sampleCheckinId },
+      select: { company_id: true, analysis_number: true },
+    });
+    if (!existing) {
+      return res.status(404).json({ error: "Sample check-in not found" });
+    }
+    if (isCustomerWithCompany(req)) {
+      if (Number(existing.company_id) !== Number(req.user.company_id)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
+    const workbookBuffer = await createAnalysisReportWorkbook(sampleCheckinId);
+    const fileName = `Analysis-${existing.analysis_number || sampleCheckinId}.xlsx`;
+    res.set({
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+      "Content-Length": workbookBuffer.length,
+    });
+    return res.send(workbookBuffer);
+  } catch (err) {
+    console.error("Error downloading analysis report:", err);
+    return res.status(500).json({
+      error: "Failed to generate analysis report",
+      detail: prismaErrorDetail(err),
     });
   }
 });
@@ -614,8 +676,16 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       amb_temp,
       sample_time,
       sample_date,
+      instrument,
+      last_instrument_verification,
+      heating_method,
+      hexanes_split,
+      sample_method,
+      effective_start_date,
+      effective_end_date,
       sampled_by,
       analyzed_by,
+      authorized_by,
       base_condition,
       physical_constant,
       field_h2s,
@@ -821,6 +891,28 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       }
       throw err;
     }
+    let parsedLastInstrumentVerification;
+    let parsedEffectiveStartDate;
+    let parsedEffectiveEndDate;
+    try {
+      parsedLastInstrumentVerification = parseOptionalDate(
+        last_instrument_verification,
+        "last_instrument_verification",
+      );
+      parsedEffectiveStartDate = parseOptionalDate(
+        effective_start_date,
+        "effective_start_date",
+      );
+      parsedEffectiveEndDate = parseOptionalDate(
+        effective_end_date,
+        "effective_end_date",
+      );
+    } catch (err) {
+      if (err?.status === 400) {
+        return res.status(400).json({ error: err.message });
+      }
+      throw err;
+    }
 
     const created = await prisma.sample_checkin.create({
       data: {
@@ -848,18 +940,29 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
             ? String(pressure_measured).trim() || null
             : null,
         temperature: temperature ?? null,
-        amb_temp:
-          amb_temp != null ? String(amb_temp).trim() || null : null,
+        amb_temp: amb_temp != null ? String(amb_temp).trim() || null : null,
         sample_time:
           sample_time != null ? String(sample_time).trim() || null : null,
         sample_date: parsedSampleDate ?? null,
-        sampled_by: sampled_by != null ? String(sampled_by).trim() || null : null,
+        instrument:
+          instrument != null ? String(instrument).trim() || null : null,
+        last_instrument_verification: parsedLastInstrumentVerification ?? null,
+        heating_method:
+          heating_method != null ? String(heating_method).trim() || null : null,
+        hexanes_split:
+          hexanes_split != null ? String(hexanes_split).trim() || null : null,
+        sample_method:
+          sample_method != null ? String(sample_method).trim() || null : null,
+        effective_start_date: parsedEffectiveStartDate ?? null,
+        effective_end_date: parsedEffectiveEndDate ?? null,
+        sampled_by:
+          sampled_by != null ? String(sampled_by).trim() || null : null,
         analyzed_by:
           analyzed_by != null ? String(analyzed_by).trim() || null : null,
+        authorized_by:
+          authorized_by != null ? String(authorized_by).trim() || null : null,
         base_condition:
-          base_condition != null
-            ? String(base_condition).trim() || null
-            : null,
+          base_condition != null ? String(base_condition).trim() || null : null,
         physical_constant:
           physical_constant != null
             ? String(physical_constant).trim() || null
@@ -897,7 +1000,15 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
     const detail = prismaErrorDetail(err);
 
     if (detail) return res.status(400).json({ error: detail });
-    return res.status(500).json({ error: "Failed to create sample check-in" });
+    logger.error("Failed to create sample check-in", {
+      message: err?.message,
+      code: err?.code,
+      meta: err?.meta,
+    });
+    return res.status(500).json({
+      error: "Failed to create sample check-in",
+      detail: err?.message,
+    });
   }
 });
 
@@ -968,7 +1079,9 @@ router.put(
     }
 
     try {
-      const existing = await prisma.sample_checkin.findUnique({ where: { id } });
+      const existing = await prisma.sample_checkin.findUnique({
+        where: { id },
+      });
       if (!existing)
         return res.status(404).json({ error: "Sample check-in not found" });
       if (isCustomerWithCompany(req)) {
@@ -1043,8 +1156,16 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       amb_temp,
       sample_time,
       sample_date,
+      instrument,
+      last_instrument_verification,
+      heating_method,
+      hexanes_split,
+      sample_method,
+      effective_start_date,
+      effective_end_date,
       sampled_by,
       analyzed_by,
+      authorized_by,
       base_condition,
       physical_constant,
       field_h2s,
@@ -1221,11 +1342,63 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
         throw err;
       }
     }
+    if (instrument !== undefined)
+      updates.instrument =
+        instrument == null || instrument === ""
+          ? null
+          : String(instrument).trim() || null;
+    if (last_instrument_verification !== undefined) {
+      try {
+        updates.last_instrument_verification = parseOptionalDate(
+          last_instrument_verification,
+          "last_instrument_verification",
+        );
+      } catch (err) {
+        if (err?.status === 400)
+          return res.status(400).json({ error: err.message });
+        throw err;
+      }
+    }
+    if (heating_method !== undefined)
+      updates.heating_method =
+        heating_method == null || heating_method === ""
+          ? null
+          : String(heating_method).trim() || null;
+    if (hexanes_split !== undefined)
+      updates.hexanes_split =
+        hexanes_split == null || hexanes_split === ""
+          ? null
+          : String(hexanes_split).trim() || null;
+    if (sample_method !== undefined)
+      updates.sample_method =
+        sample_method == null || sample_method === ""
+          ? null
+          : String(sample_method).trim() || null;
+    for (const [field, value] of [
+      ["effective_start_date", effective_start_date],
+      ["effective_end_date", effective_end_date],
+    ]) {
+      if (value !== undefined) {
+        try {
+          updates[field] = parseOptionalDate(value, field);
+        } catch (err) {
+          if (err?.status === 400)
+            return res.status(400).json({ error: err.message });
+          throw err;
+        }
+      }
+    }
     if (analyzed_by !== undefined) {
       updates.analyzed_by =
         analyzed_by == null || analyzed_by === ""
           ? null
           : String(analyzed_by).trim() || null;
+    }
+    if (authorized_by !== undefined) {
+      updates.authorized_by =
+        authorized_by == null || authorized_by === ""
+          ? null
+          : String(authorized_by).trim() || null;
     }
     if (base_condition !== undefined) {
       updates.base_condition =
@@ -1367,9 +1540,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
     if (err && err.code === "P2002") {
       const target = (err.meta && err.meta.target) || [];
       const tarr = Array.isArray(target) ? target : [target];
-      if (
-        tarr.some((t) => String(t).toLowerCase() === "analysis_number")
-      ) {
+      if (tarr.some((t) => String(t).toLowerCase() === "analysis_number")) {
         return res.status(400).json({ error: "Duplicate analysis_number" });
       }
       if (
@@ -1377,8 +1548,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
         tarr.some((t) => String(t).toLowerCase() === "analysis_position")
       ) {
         return res.status(400).json({
-          error:
-            "Duplicate analysis_position for this work_order_number",
+          error: "Duplicate analysis_position for this work_order_number",
         });
       }
       return res.status(400).json({ error: "Duplicate analysis_number" });

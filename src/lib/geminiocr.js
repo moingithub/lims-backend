@@ -6,7 +6,8 @@ if (!GEMINI_API_KEY) {
 }
 
 const genai = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genai.getGenerativeModel({ model: "gemini-2.5-pro" });
+// const model = genai.getGenerativeModel({ model: "gemini-2.5-pro" });
+const model = genai.getGenerativeModel({ model: "gemini-3.1-flash-lite" }); // 24/09/2026
 
 const PROMPT = `
 You are an expert OCR engine specialized in handwritten industrial forms.

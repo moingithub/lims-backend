@@ -123,10 +123,12 @@ model company_areas {
   id             Int                @id @default(autoincrement())
   company_id     Int
   area           String
-  region         String
   description    String?
   gl_code        String?
   pay_key        String?
+  po             String?
+  authorized_by  String?
+  cost_code      String?
   active         Boolean            @default(true)
   created_by_id  Int
   created_at     DateTime           @default(now())
@@ -243,8 +245,16 @@ model sample_checkin {
   amb_temp                 String?
   sample_time              String?
   sample_date              DateTime?
+  instrument               String?
+  last_instrument_verification DateTime?
+  heating_method           String?
+  hexanes_split            String?
+  sample_method            String?
+  effective_start_date     DateTime?
+  effective_end_date       DateTime?
   sampled_by               String?
   analyzed_by              String?
+  authorized_by            String?
   base_condition           String?
   physical_constant        String?
   field_h2s                Float                   @default(0)
@@ -373,6 +383,13 @@ model import_machine_reports {
   analyzed_by           String?
   base_condition        String?
   physical_constant     String?
+  instrument             String?
+  last_instrument_verification DateTime?
+  heating_method        String?
+  hexanes_split         String?
+  sample_method         String?
+  effective_start_date  DateTime?
+  effective_end_date    DateTime?
   company_id            Int?
   pressure_base         Decimal                   @default(0) @db.Decimal(10, 6)
   pressure_base_factor  Decimal                   @default(0) @db.Decimal(10, 6)

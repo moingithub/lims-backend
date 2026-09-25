@@ -15,14 +15,20 @@ Content-Disposition: form-data; name="company_id"
 Content-Disposition: form-data; name="file"; filename="Excel-Report-001.xlsx"
 Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 
-< D:\Projects\LIMS-Backend\uploads\user_reports\Excel-Report-001.xlsx
+# < D:\Projects\LIMS-Backend\uploads\user_reports\Excel-Report-001.xlsx
+# < D:\Projects\LIMS-Docs\Machine Reports\04092026\Gas Analysis 2261 EOG Report Template.xlsx
+< D:\Projects\LIMS-Backend\uploads\user_reports\Import Report Template-V2.xlsx
 
 ------FormBoundary--
 
 # Response includes analyzed_by, base_condition, physical_constant from Report sheet
 
+### Download stored user report file
+GET {{baseUrl}}/import_user_reports/11/download
+Authorization: Bearer {{authToken}}
+
 ### Update import record status (Imported | Validated | Error | Archived)
-PUT {{baseUrl}}/import_user_reports/1/status
+PUT {{baseUrl}}/import_user_reports/8/status
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 

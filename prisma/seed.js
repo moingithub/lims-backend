@@ -395,8 +395,10 @@ async function main() {
         data: {
           company: { connect: { id: companyId } },
           area: "HQ",
-          region: "NA",
           description: "Headquarters",
+          po: "PO-DEFAULT",
+          authorized_by: "Admin",
+          cost_code: "CC-DEFAULT",
           active: true,
           created_by: { connect: { id: adminUser.id } },
         },

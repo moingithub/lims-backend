@@ -100,6 +100,24 @@ function parseOptionalInt(value, fieldName) {
   return num;
 }
 
+function parseOptionalDate(value, fieldName) {
+  if (value === undefined || value === null || value === "") return null;
+  const match = String(value)
+    .trim()
+    .match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  const date = match
+    ? new Date(
+        Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1])),
+      )
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    const err = new Error(`Invalid ${fieldName}`);
+    err.status = 400;
+    throw err;
+  }
+  return date;
+}
+
 async function resolveCompanyPressureSettings(companyId) {
   const company = await prisma.companies.findUnique({
     where: { id: companyId },
@@ -145,6 +163,13 @@ function mapRecord(row) {
     analyzed_by: row.analyzed_by ?? null,
     base_condition: row.base_condition ?? null,
     physical_constant: row.physical_constant ?? null,
+    instrument: row.instrument ?? null,
+    last_instrument_verification: row.last_instrument_verification ?? null,
+    heating_method: row.heating_method ?? null,
+    hexanes_split: row.hexanes_split ?? null,
+    sample_method: row.sample_method ?? null,
+    effective_start_date: row.effective_start_date ?? null,
+    effective_end_date: row.effective_end_date ?? null,
     company_id: row.company_id ?? null,
     company_name: row.company?.name ?? null,
     pressure_base: row.pressure_base ?? null,
@@ -164,6 +189,13 @@ async function importMachineReportFromFile({
   companyId,
   pressureBase,
   pressureBaseFactor,
+  instrument,
+  lastInstrumentVerification,
+  heatingMethod,
+  hexanesSplit,
+  sampleMethod,
+  effectiveStartDate,
+  effectiveEndDate,
 }) {
   let parsed = null;
   if (isJsonMachineReportFile(originalName)) {
@@ -181,6 +213,22 @@ async function importMachineReportFromFile({
         file_name: originalName,
         stored_file_name: path.basename(filePath),
         method_name: parsed?.method_name ?? null,
+        instrument: instrument || null,
+        last_instrument_verification: parseOptionalDate(
+          lastInstrumentVerification,
+          "last_instrument_verification",
+        ),
+        heating_method: heatingMethod || null,
+        hexanes_split: hexanesSplit || null,
+        sample_method: sampleMethod || null,
+        effective_start_date: parseOptionalDate(
+          effectiveStartDate,
+          "effective_start_date",
+        ),
+        effective_end_date: parseOptionalDate(
+          effectiveEndDate,
+          "effective_end_date",
+        ),
         ...(companyId != null
           ? {
               company_id: companyId,
@@ -325,6 +373,13 @@ router.post(
         companyId,
         pressureBase,
         pressureBaseFactor,
+        instrument: req.body?.instrument,
+        lastInstrumentVerification: req.body?.last_instrument_verification,
+        heatingMethod: req.body?.heating_method,
+        hexanesSplit: req.body?.hexanes_split,
+        sampleMethod: req.body?.sample_method,
+        effectiveStartDate: req.body?.effective_start_date,
+        effectiveEndDate: req.body?.effective_end_date,
       });
       return res.status(201).json(mapRecord(created));
     } catch (err) {
@@ -360,6 +415,47 @@ router.post(
       }
       return res.status(500).json({
         error: "Failed to upload machine report",
+        detail: prismaErrorDetail(err),
+      });
+    }
+  },
+);
+
+// Download the original imported file
+router.get(
+  "/:id/download",
+  authorize("import_machine_report"),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: "Invalid id" });
+    }
+
+    try {
+      const existing = await prisma.import_machine_reports.findUnique({
+        where: { id },
+        select: { stored_file_name: true },
+      });
+      if (!existing) {
+        return res.status(404).json({ error: "Import record not found" });
+      }
+
+      const filePath = path.join(UPLOAD_DIR, existing.stored_file_name);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Stored file not found" });
+      }
+
+      return res.download(filePath, existing.stored_file_name, (err) => {
+        if (err && !res.headersSent) {
+          return res.status(500).json({
+            error: "Failed to download import file",
+            detail: prismaErrorDetail(err),
+          });
+        }
+      });
+    } catch (err) {
+      return res.status(500).json({
+        error: "Failed to download import file",
         detail: prismaErrorDetail(err),
       });
     }

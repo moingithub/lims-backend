@@ -115,6 +115,13 @@ async function fetchMachineReportSection(checkin) {
       analyzed_by: "",
       base_condition: "",
       physical_constant: "",
+      instrument: "",
+      last_instrument_verification: "",
+      heating_method: "",
+      hexanes_split: "",
+      sample_method: "",
+      effective_start_date: "",
+      effective_end_date: "",
       component_table: [],
       analysis_results: emptyAnalysisResults(),
     };
@@ -128,6 +135,13 @@ async function fetchMachineReportSection(checkin) {
         analyzed_by: true,
         base_condition: true,
         physical_constant: true,
+        instrument: true,
+        last_instrument_verification: true,
+        heating_method: true,
+        hexanes_split: true,
+        sample_method: true,
+        effective_start_date: true,
+        effective_end_date: true,
       },
     }),
     prisma.machine_report_results.findMany({
@@ -183,6 +197,15 @@ async function fetchMachineReportSection(checkin) {
     analyzed_by: blank(importReport?.analyzed_by),
     base_condition: blank(importReport?.base_condition),
     physical_constant: blank(importReport?.physical_constant),
+    instrument: blank(importReport?.instrument),
+    last_instrument_verification: formatAnalyzedOn(
+      importReport?.last_instrument_verification,
+    ),
+    heating_method: blank(importReport?.heating_method),
+    hexanes_split: blank(importReport?.hexanes_split),
+    sample_method: blank(importReport?.sample_method),
+    effective_start_date: formatAnalyzedOn(importReport?.effective_start_date),
+    effective_end_date: formatAnalyzedOn(importReport?.effective_end_date),
     component_table: componentTable,
     analysis_results: buildAnalysisResultsFromMetrics(metricRows),
   };
@@ -194,6 +217,7 @@ async function buildAnalysisReport(sampleCheckinId) {
     include: {
       company: { select: { name: true, phone: true, email: true } },
       company_contact: { select: { name: true, phone: true, email: true } },
+      analysis_pricing: { select: { analysis_type: true } },
     },
   });
 
@@ -210,7 +234,9 @@ async function buildAnalysisReport(sampleCheckinId) {
       contact_person: blank(checkin.company_contact?.name),
     },
     report_information: {
-      method: machineReport.method,
+      method:
+        blank(checkin.analysis_pricing?.analysis_type) ||
+        blank(machineReport.method),
       analysis_number: blank(checkin.analysis_number),
       cylinder_number: blank(checkin.cylinder_number),
       analyzed_on: machineReport.analyzed_on,
@@ -233,7 +259,23 @@ async function buildAnalysisReport(sampleCheckinId) {
       sample_temperature: blank(checkin.temperature),
       amb_temp: blank(checkin.amb_temp),
       sample_time: formatSampleTime(checkin.sample_time),
-      sample_method: "",
+      instrument: blank(checkin.instrument) || blank(machineReport.instrument),
+      last_instrument_verification: formatAnalyzedOn(
+        checkin.last_instrument_verification ||
+          machineReport.last_instrument_verification,
+      ),
+      heating_method:
+        blank(checkin.heating_method) || blank(machineReport.heating_method),
+      hexanes_split:
+        blank(checkin.hexanes_split) || blank(machineReport.hexanes_split),
+      sample_method:
+        blank(checkin.sample_method) || blank(machineReport.sample_method),
+      effective_start_date: formatAnalyzedOn(
+        checkin.effective_start_date || machineReport.effective_start_date,
+      ),
+      effective_end_date: formatAnalyzedOn(
+        checkin.effective_end_date || machineReport.effective_end_date,
+      ),
       field_h2s: blankNumber(checkin.field_h2s),
       flow_rate: blank(checkin.flow_rate),
     },
