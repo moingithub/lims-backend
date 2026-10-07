@@ -93,60 +93,11 @@ function addSharedString(xml, value) {
   };
 }
 
-function componentKey(value) {
-  return String(value || "")
-    .replace(/\*$/, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
-
-function populateComponents(xml, componentTable) {
-  const aliases = new Map([
-    ["h2s", "h2s"],
-    ["nitrogen", "n2"],
-    ["carbon dioxide", "co2"],
-    ["methane", "c1"],
-    ["ethane", "c2"],
-    ["propane", "c3"],
-    ["iso-butane", "ic4"],
-    ["n-butane", "nc4"],
-    ["iso-pentane", "ic5"],
-    ["n-pentane", "nc5"],
-    ["hexanes plus", "c6+"],
-  ]);
-  const values = new Map(
-    (componentTable || []).map((row) => [
-      aliases.get(componentKey(row.component)) || componentKey(row.component),
-      asNumber(row.mole_pct),
-    ]),
-  );
-
-  const labels = [
-    [26, "h2s"],
-    [27, "nitrogen"],
-    [28, "carbon dioxide"],
-    [29, "methane"],
-    [30, "ethane"],
-    [31, "propane"],
-    [32, "iso-butane"],
-    [33, "n-butane"],
-    [34, "iso-pentane"],
-    [35, "n-pentane"],
-    [36, "hexanes plus"],
-  ];
-  for (const [row, label] of labels) {
-    const key = aliases.get(label) || label;
-    xml = setCellValue(xml, `C${row}`, values.get(key) ?? null);
-  }
-  return xml;
-}
-
 async function createAnalysisReportWorkbook(sampleCheckinId) {
   const checkin = await prisma.sample_checkin.findUnique({
     where: { id: sampleCheckinId },
     include: {
-      company: { select: { name: true } },
+      company: { select: { name: true, billing_address: true } },
       company_contact: { select: { name: true } },
     },
   });
@@ -155,7 +106,6 @@ async function createAnalysisReportWorkbook(sampleCheckinId) {
   const report = await buildAnalysisReport(sampleCheckinId);
   const reportInfo = report.report_information;
   const sample = report.sample_information;
-  const customer = report.customer_information;
   let reportXml = await JSZip.loadAsync(
     await fs.promises.readFile(TEMPLATE_PATH),
   ).then((zip) =>
@@ -166,19 +116,30 @@ async function createAnalysisReportWorkbook(sampleCheckinId) {
   );
   let { zip, xml } = reportXml;
   let sharedStrings = await zip.file("xl/sharedStrings.xml").async("string");
+  const addressLines = String(checkin.company?.billing_address || "")
+    .split(",")
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   const values = new Map([
     ["B8", reportInfo.method],
     ["B9", reportInfo.analysis_number],
     ["B10", reportInfo.cylinder_number],
-    ["H7", customer.company_name || checkin.company?.name],
-    ["H8", customer.contact_person || checkin.company_contact?.name],
+    ["H7", checkin.company?.name],
     [
-      "H11",
-      checkin.work_order_number
-        ? `Work Order: ${checkin.work_order_number}`
+      "H8",
+      checkin.company_contact?.name
+        ? `Attn: ${checkin.company_contact.name}`
         : null,
     ],
+    ["H9", addressLines[0]],
+    [
+      "H10",
+      addressLines.length > 2
+        ? addressLines.slice(1).join(", ")
+        : addressLines[1],
+    ],
+    ["H11", null],
     ["C13", sample.producer],
     ["G13", sample.sampled_by],
     ["C14", sample.well_lease],
@@ -202,7 +163,6 @@ async function createAnalysisReportWorkbook(sampleCheckinId) {
       xml = setCellValue(xml, address, value ?? null);
     }
   }
-  xml = populateComponents(xml, report.component_table);
   zip.file("xl/worksheets/sheet2.xml", xml);
   zip.file("xl/sharedStrings.xml", sharedStrings);
   const workbookRelationships = await zip
