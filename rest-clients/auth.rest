@@ -74,3 +74,17 @@ Content-Type: application/json
 {
   "error": "Invalid credentials"
 }
+
+### Authenticate with mixed-case email and surrounding whitespace
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": " ADMIN@LIMS.COM ",
+  "password": "admin123!"
+}
+
+### Verify the login JWT on an authenticated endpoint
+# After login, update authToken in .vscode/settings.json with the returned token.
+GET {{baseUrl}}/users
+Authorization: ******

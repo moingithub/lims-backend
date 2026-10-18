@@ -46,6 +46,12 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/sample_checkin/3/analysis-report/download
 Authorization: Bearer {{authToken}}
 
+# ### Download Report Template by Sample check-in id
+# GET {{baseUrl}}/sample_checkin/3/analysis-report/download
+# Authorization: Bearer {{authToken}}
+
+
+
 ### Upload OCR file for sample check-in
 POST {{baseUrl}}/sample_checkin/ocr
 Authorization: Bearer {{authToken}}

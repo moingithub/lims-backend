@@ -114,6 +114,12 @@ function clearAdminRoleCache() {
   adminRoleCache.clear();
 }
 
+function resolveJwtSecret() {
+  const configured = process.env.JWT_SECRET;
+  if (configured && String(configured).trim()) return String(configured).trim();
+  return "dev-secret-change-me";
+}
+
 /**
  * Inspect Postgres check constraints for a table/column and extract allowed values
  * when the constraint is of the shape: column = ANY (ARRAY['A', 'B', ...]).
@@ -268,6 +274,7 @@ module.exports = {
   prisma,
   isAdminRole,
   clearAdminRoleCache,
+  resolveJwtSecret,
   prismaErrorDetail,
   getAllowedValuesFromConstraints,
   normalizeToAllowed,

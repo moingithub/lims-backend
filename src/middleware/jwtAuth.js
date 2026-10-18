@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { prisma } = require("../lib/common");
+const { prisma, resolveJwtSecret } = require("../lib/common");
 const logger = require("../lib/logger");
 
 /**
@@ -52,7 +52,7 @@ module.exports = async function (req, res, next) {
     token = token.slice(1, -1);
   }
 
-  const JWT_SECRET = process.env.JWT_SECRET;
+  const JWT_SECRET = resolveJwtSecret();
   try {
     const payload = jwt.verify(token, JWT_SECRET);
 

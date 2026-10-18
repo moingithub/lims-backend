@@ -20,6 +20,7 @@ const importMachineReportsRouter = require("./import_machine_reports.routes");
 const importUserReportsRouter = require("./import_user_reports.routes");
 const gasComponentMasterRouter = require("./gas_component_master.routes");
 const analysisReportsRouter = require("./analysis_reports.routes");
+const reportFilesRouter = require("./report_files.routes");
 const jwtAuth = require("../middleware/jwtAuth");
 const authorize = require("../middleware/authorize");
 
@@ -58,6 +59,7 @@ router.use("/import_machine_reports", jwtAuth, importMachineReportsRouter);
 router.use("/import_user_reports", jwtAuth, importUserReportsRouter);
 router.use("/gas_component_master", jwtAuth, gasComponentMasterRouter);
 router.use("/analysis_reports", jwtAuth, analysisReportsRouter);
+router.use("/report_files", jwtAuth, reportFilesRouter);
 router.use("/auth", authRouter);
 
 module.exports = router;

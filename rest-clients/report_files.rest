@@ -1,0 +1,10 @@
+### Update measured pressure and download a report template
+POST {{baseUrl}}/report_files
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "sample_checkin": 3,
+  "report_template_name": "GA 2261 EOG Report.xlsx",
+  "pressure_measured": "98"
+}

@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { randomUUID } = require("crypto");
-const { prisma } = require("../lib/common");
+const { prisma, resolveJwtSecret } = require("../lib/common");
 const logger = require("../lib/logger");
 
 const router = express.Router();
@@ -14,7 +14,10 @@ router.post("/login", async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ error: "email and password are required" });
 
-    const user = await prisma.users.findUnique({ where: { email } });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await prisma.users.findUnique({
+      where: { email: normalizedEmail },
+    });
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     // Compare provided password with stored hashed password
@@ -37,8 +40,8 @@ router.post("/login", async (req, res) => {
     const safeUser = { ...user };
     delete safeUser.password;
 
-    // Sign a JWT token. Use environment variable JWT_SECRET in production.
-    const JWT_SECRET = process.env.JWT_SECRET;
+    // Sign a JWT token. Fall back to a local dev secret when no environment secret is configured.
+    const JWT_SECRET = resolveJwtSecret();
     // include company_id (if present) so clients can have it; server jwtAuth will still re-load from DB
     const tokenPayload = {
       userId: user.id,

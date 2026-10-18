@@ -93,7 +93,10 @@ function addSharedString(xml, value) {
   };
 }
 
-async function createAnalysisReportWorkbook(sampleCheckinId) {
+async function createAnalysisReportWorkbook(
+  sampleCheckinId,
+  { templatePath = TEMPLATE_PATH, pressureMeasured } = {},
+) {
   const checkin = await prisma.sample_checkin.findUnique({
     where: { id: sampleCheckinId },
     include: {
@@ -107,7 +110,7 @@ async function createAnalysisReportWorkbook(sampleCheckinId) {
   const reportInfo = report.report_information;
   const sample = report.sample_information;
   let reportXml = await JSZip.loadAsync(
-    await fs.promises.readFile(TEMPLATE_PATH),
+    await fs.promises.readFile(templatePath),
   ).then((zip) =>
     zip
       .file("xl/worksheets/sheet2.xml")
@@ -120,6 +123,16 @@ async function createAnalysisReportWorkbook(sampleCheckinId) {
     .split(",")
     .map((line) => line.trim())
     .filter(Boolean);
+  const measuredPressure =
+    pressureMeasured !== undefined
+      ? pressureMeasured
+      : checkin.pressure_measured;
+  const pressureValues = [checkin.pressure, measuredPressure]
+    .map((value) => {
+      if (value == null || value === "") return null;
+      return asNumber(value) ?? String(value);
+    })
+    .filter((value) => value !== null);
 
   const values = new Map([
     ["B8", reportInfo.method],
@@ -145,10 +158,10 @@ async function createAnalysisReportWorkbook(sampleCheckinId) {
     ["C14", sample.well_lease],
     ["G14", excelDateSerial(sample.sample_date)],
     ["C15", sample.meter_number],
-    ["G15", asNumber(checkin.pressure)],
+    ["G15", pressureValues.length ? pressureValues.join(" / ") : null],
     ["H15", checkin.pressure_unit],
     ["G16", asNumber(sample.sample_temperature)],
-    ["G17", asNumber(sample.amb_temp)],
+    ["G17", asNumber(sample.amb_temp) ?? sample.amb_temp],
     ["F18", sample.flow_rate],
     ["I18", asNumber(sample.field_h2s)],
     ["I19", sample.sample_type],

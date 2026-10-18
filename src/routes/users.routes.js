@@ -76,6 +76,8 @@ router.post("/", authorize("users"), async (req, res) => {
         .json({ error: "name, email, password and role_id are required" });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     const roleId = Number(role_id);
     if (!Number.isInteger(roleId) || roleId <= 0)
       return res.status(400).json({ error: "Invalid role_id" });
@@ -102,7 +104,7 @@ router.post("/", authorize("users"), async (req, res) => {
     // Base data for new user
     const data = {
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: { connect: { id: roleId } },
       active: typeof active === "boolean" ? active : true,
@@ -181,6 +183,8 @@ router.put("/:id", authorize("users"), async (req, res) => {
     }
 
     const { name, email, password, role_id, active, company_id } = req.body;
+    const normalizedEmail =
+      email !== undefined ? String(email).trim().toLowerCase() : undefined;
 
     if (role_id !== undefined && role_id !== null) {
       const roleId = Number(role_id);
@@ -281,7 +285,7 @@ router.put("/:id", authorize("users"), async (req, res) => {
       where: { id },
       data: {
         ...(name !== undefined ? { name } : {}),
-        ...(email !== undefined ? { email } : {}),
+        ...(normalizedEmail !== undefined ? { email: normalizedEmail } : {}),
         ...passwordPart,
         ...(role_id !== undefined
           ? { role: { connect: { id: Number(role_id) } } }

@@ -1,0 +1,7 @@
+
+The Download Analysis Report action on Report Files uses
+https://lims.nattygaslab.com/api/sample_checkin/{sampleCheckinId}/analysis-report/download
+
+
+Download Report Template On Report Files
+POST {{baseUrl}}/report_files
