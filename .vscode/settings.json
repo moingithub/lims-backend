@@ -1,4 +1,5 @@
 {
+  "rest-client.defaultEnvironment": "local",
   "rest-client.previewResponseInUntitledDocument": true,
   "rest-client.previewColumn": "beside",
   "rest-client.previewResponsePanelTakeFocus": false,
@@ -8,7 +9,7 @@
   "rest-client.environmentVariables": {
     "local": {
       "baseUrl": "http://localhost:4000/api",
-      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc5MjMzNTE2OCwiZXhwIjoxNzkyMzYzOTY4fQ.DjhGpw-z_NgBW0KzZ6G-Ll5ioebiXAzGvURNRSRozQc"
+      "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGVfaWQiOjEsImNvbXBhbnlfaWQiOjEsImlhdCI6MTc5MzQ0OTIzOSwiZXhwIjoxNzkzNDc4MDM5fQ.2AsRGl1XGJt9ipHWG3GrTAVJ6pTZyWGluButPyEACBQ"
     },
     "demo": {
       "baseUrl": "http://47.29.134.42:5000/api",

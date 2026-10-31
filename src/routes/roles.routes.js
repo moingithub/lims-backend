@@ -1,5 +1,9 @@
 const express = require("express");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 
 const adminOnly = require("../middleware/adminOnly");
 const router = express.Router();
@@ -124,12 +128,10 @@ router.delete("/:id", adminOnly(), async (req, res) => {
     await prisma.roles.delete({ where: { id } });
     return res.json({ message: "Role deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Role not found" });
-    const detail = prismaErrorDetail(err);
-    if (detail) return res.status(400).json({ error: detail });
-    return res.status(500).json({
-      error: err && err.message ? String(err.message) : "Failed to delete role",
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Role",
+      inUseName: "role",
+      fallbackError: "Failed to delete role",
     });
   }
 });

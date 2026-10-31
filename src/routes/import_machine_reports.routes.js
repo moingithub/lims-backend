@@ -2,7 +2,11 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 const authorize = require("../middleware/authorize");
 const {
   parseMachineReportJson,
@@ -524,9 +528,10 @@ router.delete("/:id", authorize("import_machine_report"), async (req, res) => {
 
     return res.json({ message: "Import record deleted" });
   } catch (err) {
-    return res.status(500).json({
-      error: "Failed to delete import record",
-      detail: prismaErrorDetail(err),
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Import record",
+      inUseName: "machine report import",
+      fallbackError: "Failed to delete import record",
     });
   }
 });

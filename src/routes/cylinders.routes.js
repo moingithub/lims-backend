@@ -2,6 +2,7 @@ const express = require("express");
 const {
   prisma,
   prismaErrorDetail,
+  sendDeleteErrorResponse,
   getAllowedValuesFromConstraints,
   normalizeToAllowed,
 } = require("../lib/common");
@@ -59,14 +60,14 @@ router.post("/", authorize("cylinders"), async (req, res) => {
       [];
     const finalCylinderType = normalizeToAllowed(
       cylinder_type,
-      allowedCylinderTypes
+      allowedCylinderTypes,
     );
     if (!allowedCylinderTypes.includes(finalCylinderType)) {
       return res.status(400).json({
         error:
           allowedCylinderTypes.length > 0
             ? `Invalid cylinder_type. Allowed: ${allowedCylinderTypes.join(
-                ", "
+                ", ",
               )}`
             : "Invalid cylinder_type",
       });
@@ -138,14 +139,14 @@ router.put("/:id", authorize("cylinders"), async (req, res) => {
         [];
       const finalCylinderType = normalizeToAllowed(
         cylinder_type,
-        allowedCylinderTypes
+        allowedCylinderTypes,
       );
       if (!allowedCylinderTypes.includes(finalCylinderType)) {
         return res.status(400).json({
           error:
             allowedCylinderTypes.length > 0
               ? `Invalid cylinder_type. Allowed: ${allowedCylinderTypes.join(
-                  ", "
+                  ", ",
                 )}`
               : "Invalid cylinder_type",
         });
@@ -194,9 +195,11 @@ router.delete("/:id", authorize("cylinders"), async (req, res) => {
     await prisma.cylinders.delete({ where: { id } });
     return res.json({ message: "Cylinder deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Cylinder not found" });
-    return res.status(500).json({ error: "Failed to delete cylinder" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Cylinder",
+      inUseName: "cylinder",
+      fallbackError: "Failed to delete cylinder",
+    });
   }
 });
 

@@ -1,8 +1,21 @@
 const express = require("express");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  resourceInUseDeleteMessage,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 const authorize = require("../middleware/authorize");
 
 const router = express.Router();
+
+async function isCompanyAreaInUse(areaId) {
+  const [checkinCount, contactCount] = await Promise.all([
+    prisma.sample_checkin.count({ where: { area_id: areaId } }),
+    prisma.company_contacts.count({ where: { company_area_id: areaId } }),
+  ]);
+  return checkinCount > 0 || contactCount > 0;
+}
 
 function isCustomerWithCompany(req) {
   return (
@@ -288,14 +301,20 @@ router.delete("/:id", authorize("company_areas"), async (req, res) => {
       }
     }
 
+    if (await isCompanyAreaInUse(id)) {
+      return res.status(409).json({
+        error: resourceInUseDeleteMessage("company area"),
+      });
+    }
+
     await prisma.company_areas.delete({ where: { id } });
     return res.json({ message: "Company area deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Company area not found" });
-    const detail = prismaErrorDetail(err);
-    if (detail) return res.status(400).json({ error: detail });
-    return res.status(500).json({ error: "Failed to delete company area" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Company area",
+      inUseName: "company area",
+      fallbackError: "Failed to delete company area",
+    });
   }
 });
 

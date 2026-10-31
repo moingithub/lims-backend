@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model users {
@@ -153,7 +152,7 @@ model company_contacts {
   created_by_id     Int
   created_at        DateTime            @default(now())
   updated_at        DateTime            @updatedAt
-  company_area      company_areas?      @relation(fields: [company_area_id], references: [id])
+  company_area      company_areas?      @relation(fields: [company_area_id], references: [id], onDelete: Restrict)
   company           companies           @relation(fields: [company_id], references: [id], onDelete: Restrict)
   created_by        users               @relation(fields: [created_by_id], references: [id])
   cylinderCheckouts cylinder_checkout[]
@@ -254,6 +253,7 @@ model sample_checkin {
   effective_end_date       DateTime?
   sampled_by               String?
   analyzed_by              String?
+  analyzed_on              DateTime?
   authorized_by            String?
   base_condition           String?
   physical_constant        String?
@@ -278,7 +278,7 @@ model sample_checkin {
   updated_at               DateTime                @updatedAt
   invoiceLines             invoice_lines?
   analysis_pricing         analysis_pricing        @relation(fields: [analysis_type_id], references: [id])
-  company_area             company_areas?          @relation(fields: [area_id], references: [id])
+  company_area             company_areas?          @relation(fields: [area_id], references: [id], onDelete: Restrict)
   company_contact          company_contacts        @relation(fields: [company_contact_id], references: [id])
   company                  companies               @relation(fields: [company_id], references: [id], onDelete: Restrict)
   created_by               users                   @relation(fields: [created_by_id], references: [id])
@@ -505,4 +505,27 @@ view sample_analysis_position {
   analysis_position        Int?
   import_machine_report_id Int?
   import_id                String?
+}
+
+view report_file_list {
+  company_id               Int?
+  sample_checkin_id        Int?    @unique
+  company_name             String?
+  analysis_type            String?
+  cylinder_number          String?
+  analysis_number          String?
+  well_name                String?
+  meter_number             String?
+  sample_date              DateTime? @db.Date
+  status                   String?
+  work_order_number        String?
+  sample_pressure          String?
+  pressure_measured        String?
+  pressure_unit            String?
+  tag_image                String?
+  instrument               String?
+  analyzed_on              DateTime?
+  analyzed_by              String?
+  effective_start_date     DateTime? @db.Date
+  effective_end_date       DateTime? @db.Date
 }

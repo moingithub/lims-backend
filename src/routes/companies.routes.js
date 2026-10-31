@@ -1,5 +1,9 @@
 const express = require("express");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 const authorize = require("../middleware/authorize");
 
 const router = express.Router();
@@ -234,11 +238,11 @@ router.delete("/:id", authorize("companies"), async (req, res) => {
     await prisma.companies.delete({ where: { id } });
     return res.json({ message: "Company deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Company not found" });
-    const detail = prismaErrorDetail(err);
-    if (detail) return res.status(400).json({ error: detail });
-    return res.status(500).json({ error: "Failed to delete company" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Company",
+      inUseName: "company",
+      fallbackError: "Failed to delete company",
+    });
   }
 });
 

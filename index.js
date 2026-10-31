@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const rootRouter = require("./src/routes/rootRouter");
 
@@ -12,8 +14,8 @@ app.use(
     // origin: "http://localhost:3000", // allow React
     origin: "*", // allow all origins(for testing purposes)
 
-    methods: "GET,POST,PUT,DELETE",
-    allowedHeaders: "Content-Type,Authorization",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

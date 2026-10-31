@@ -1,5 +1,3 @@
-GET {{baseUrl}}
-
 
 ### Authenticate (login)
 POST {{baseUrl}}/auth/login

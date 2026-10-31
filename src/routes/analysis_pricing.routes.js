@@ -1,5 +1,9 @@
 const express = require("express");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 const authorize = require("../middleware/authorize");
 const logger = require("../lib/logger");
 
@@ -177,9 +181,11 @@ router.delete("/:id", authorize("analysis_pricing"), async (req, res) => {
     await prisma.analysis_pricing.delete({ where: { id } });
     return res.json({ message: "Analysis pricing deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Analysis pricing not found" });
-    return res.status(500).json({ error: "Failed to delete analysis pricing" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Analysis pricing",
+      inUseName: "analysis pricing",
+      fallbackError: "Failed to delete analysis pricing",
+    });
   }
 });
 

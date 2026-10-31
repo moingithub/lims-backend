@@ -3,5 +3,31 @@ The Download Analysis Report action on Report Files uses
 https://lims.nattygaslab.com/api/sample_checkin/{sampleCheckinId}/analysis-report/download
 
 
-Download Report Template On Report Files
+Front End: Report Files -> Download Report Template
+
 POST {{baseUrl}}/report_files
+
+### Update report fields on sample check-in
+PATCH {{baseUrl}}/report_files/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "pressure_measured": "100",
+  "status": "Pending",
+  "instrument": "Inficon 1 GC",
+  "analyzed_on": "2026-07-04T15:30:00.000Z",
+  "analyzed_by": "Johannes Xie",
+  "effective_start_date": "01-05-2026",
+  "effective_end_date": "31-05-2026"
+}
+
+### Generate filled report (.xlsx download)
+POST {{baseUrl}}/report_files
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "sample_checkin": 1,
+  "report_template_name": "GA 2261 EOG Report.xlsx"
+}

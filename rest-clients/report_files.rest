@@ -1,10 +1,28 @@
-### Update measured pressure and download a report template
+### List report files (report_file_list view)
+GET {{baseUrl}}/report_files
+Authorization: Bearer {{authToken}}
+
+### Update report fields on sample check-in (returns report_file_list row)
+PATCH {{baseUrl}}/report_files/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "pressure_measured": "100",
+  "status": "Pending",
+  "instrument": "Inficon 1 GC",
+  "analyzed_on": "2026-07-04T15:30:00.000Z",
+  "analyzed_by": "Johannes Xie",
+  "effective_start_date": "01-05-2026",
+  "effective_end_date": "31-05-2026"
+}
+
+### Generate filled report (.xlsx download)
 POST {{baseUrl}}/report_files
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "sample_checkin": 3,
-  "report_template_name": "GA 2261 EOG Report.xlsx",
-  "pressure_measured": "98"
+  "sample_checkin": 1,
+  "report_template_name": "GA 2261 Report Release 2.1.xlsx"
 }

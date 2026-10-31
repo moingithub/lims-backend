@@ -14,6 +14,7 @@ const {
   prismaErrorDetail,
   getAllowedValuesFromConstraints,
   normalizeToAllowed,
+  sendDeleteErrorResponse,
 } = require("../lib/common");
 const authorize = require("../middleware/authorize");
 const logger = require("../lib/logger");
@@ -28,6 +29,27 @@ function parseOptionalFloat(value) {
     return Number.isFinite(num) ? num : null;
   }
   return null;
+}
+
+function decimalToNumericString(value) {
+  if (value == null) return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? String(num) : null;
+}
+
+function resolveSampleCheckinBaseCondition(bodyValue, company) {
+  if (bodyValue != null && String(bodyValue).trim()) {
+    return String(bodyValue).trim();
+  }
+  return decimalToNumericString(company?.pressure_base);
+}
+
+function resolveSampleCheckinPressureBaseFactor(bodyValue, company) {
+  const fromBody = parseOptionalFloat(bodyValue);
+  if (fromBody != null) return fromBody;
+  const fromCompany = parseOptionalFloat(company?.pressure_base_factor);
+  if (fromCompany != null) return fromCompany;
+  return 0;
 }
 
 function parseOptionalDate(value, fieldName = "sample_date") {
@@ -685,6 +707,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       effective_end_date,
       sampled_by,
       analyzed_by,
+      analyzed_on,
       authorized_by,
       base_condition,
       physical_constant,
@@ -881,7 +904,15 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
 
     // const finalWorkOrderNumber = await generateWorkOrderNumber();
 
-    const parsedPressureBaseFactor = parseOptionalFloat(pressure_base_factor);
+    const finalBaseCondition = resolveSampleCheckinBaseCondition(
+      base_condition,
+      company,
+    );
+    const finalPressureBaseFactor = resolveSampleCheckinPressureBaseFactor(
+      pressure_base_factor,
+      company,
+    );
+
     let parsedSampleDate;
     try {
       parsedSampleDate = parseOptionalDate(sample_date, "sample_date");
@@ -894,6 +925,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
     let parsedLastInstrumentVerification;
     let parsedEffectiveStartDate;
     let parsedEffectiveEndDate;
+    let parsedAnalyzedOn;
     try {
       parsedLastInstrumentVerification = parseOptionalDate(
         last_instrument_verification,
@@ -907,6 +939,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
         effective_end_date,
         "effective_end_date",
       );
+      parsedAnalyzedOn = parseOptionalDate(analyzed_on, "analyzed_on");
     } catch (err) {
       if (err?.status === 400) {
         return res.status(400).json({ error: err.message });
@@ -959,18 +992,16 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
           sampled_by != null ? String(sampled_by).trim() || null : null,
         analyzed_by:
           analyzed_by != null ? String(analyzed_by).trim() || null : null,
+        analyzed_on: parsedAnalyzedOn ?? null,
         authorized_by:
           authorized_by != null ? String(authorized_by).trim() || null : null,
-        base_condition:
-          base_condition != null ? String(base_condition).trim() || null : null,
+        base_condition: finalBaseCondition,
         physical_constant:
           physical_constant != null
             ? String(physical_constant).trim() || null
             : null,
         field_h2s: parseOptionalFloat(field_h2s) ?? 0,
-        ...(parsedPressureBaseFactor != null
-          ? { pressure_base_factor: parsedPressureBaseFactor }
-          : {}),
+        pressure_base_factor: finalPressureBaseFactor,
         cost_code: cost_code ?? null,
         checkin_type: finalCheckinType,
         invoice_ref_name: invoice_ref_name ?? null,
@@ -1165,6 +1196,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
       effective_end_date,
       sampled_by,
       analyzed_by,
+      analyzed_on,
       authorized_by,
       base_condition,
       physical_constant,
@@ -1377,6 +1409,7 @@ router.put("/:id", authorize("sample_checkin"), async (req, res) => {
     for (const [field, value] of [
       ["effective_start_date", effective_start_date],
       ["effective_end_date", effective_end_date],
+      ["analyzed_on", analyzed_on],
     ]) {
       if (value !== undefined) {
         try {
@@ -1578,11 +1611,11 @@ router.delete("/:id", authorize("sample_checkin"), async (req, res) => {
     await prisma.sample_checkin.delete({ where: { id } });
     return res.json({ message: "Sample check-in deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Sample check-in not found" });
-    const detail = prismaErrorDetail(err);
-    if (detail) return res.status(400).json({ error: detail });
-    return res.status(500).json({ error: "Failed to delete sample check-in" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Sample check-in",
+      inUseName: "sample check-in",
+      fallbackError: "Failed to delete sample check-in",
+    });
   }
 });
 

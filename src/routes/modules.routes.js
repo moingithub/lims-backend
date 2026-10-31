@@ -1,5 +1,5 @@
 const express = require("express");
-const { prisma } = require("../lib/common");
+const { prisma, sendDeleteErrorResponse } = require("../lib/common");
 const authorize = require("../middleware/authorize");
 
 const router = express.Router();
@@ -97,9 +97,11 @@ router.delete("/:id", authorize("modules"), async (req, res) => {
     await prisma.modules.delete({ where: { id } });
     return res.json({ message: "Module deleted" });
   } catch (err) {
-    if (err && err.code === "P2025")
-      return res.status(404).json({ error: "Module not found" });
-    return res.status(500).json({ error: "Failed to delete module" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Module",
+      inUseName: "module",
+      fallbackError: "Failed to delete module",
+    });
   }
 });
 

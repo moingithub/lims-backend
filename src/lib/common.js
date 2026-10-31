@@ -1,5 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { PrismaPg } = require("@prisma/adapter-pg");
+const { Pool } = require("pg");
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 // simple in-memory cache for roleId -> isAdmin
 const adminRoleCache = new Map();
 // in-memory cache for enum-like allowed values discovered from DB check constraints
@@ -261,6 +266,33 @@ function prismaErrorDetail(err) {
   return null;
 }
 
+/** User-facing message when delete fails because other records reference this row. */
+function resourceInUseDeleteMessage(resourceName) {
+  const name = String(resourceName || "record").trim() || "record";
+  return `This ${name} is in use and cannot be deleted.`;
+}
+
+/**
+ * Standard API response for DELETE handlers (404, FK in-use, validation, 500).
+ */
+function sendDeleteErrorResponse(
+  res,
+  err,
+  { notFoundLabel, inUseName, fallbackError },
+) {
+  if (err && err.code === "P2025") {
+    return res.status(404).json({ error: `${notFoundLabel} not found` });
+  }
+  if (err && err.code === "P2003") {
+    return res.status(409).json({
+      error: resourceInUseDeleteMessage(inUseName),
+    });
+  }
+  const detail = prismaErrorDetail(err);
+  if (detail) return res.status(400).json({ error: detail });
+  return res.status(500).json({ error: fallbackError });
+}
+
 /**
  * Clear the permissions cache and reload the latest from the database.
  * Returns the refreshed cache.
@@ -276,6 +308,8 @@ module.exports = {
   clearAdminRoleCache,
   resolveJwtSecret,
   prismaErrorDetail,
+  resourceInUseDeleteMessage,
+  sendDeleteErrorResponse,
   getAllowedValuesFromConstraints,
   normalizeToAllowed,
   // permissions cache helpers

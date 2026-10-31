@@ -3,6 +3,7 @@ const {
   prisma,
   prismaErrorDetail,
   clearPermissionsCache,
+  sendDeleteErrorResponse,
 } = require("../lib/common");
 const adminOnly = require("../middleware/adminOnly");
 
@@ -147,15 +148,16 @@ router.delete("/:id", adminOnly(), async (req, res) => {
     }
     res.status(204).end();
   } catch (error) {
-    const details = {
+    logger.error("DELETE /role_modules/:id error:", {
       message: error?.message,
       code: error?.code,
       meta: error?.meta,
-    };
-    logger.error("DELETE /role_modules/:id error:", details);
-    if (error.code === "P2025")
-      return res.status(404).json({ error: "Not found" });
-    res.status(500).json({ error: "Failed to delete role_module", ...details });
+    });
+    return sendDeleteErrorResponse(res, error, {
+      notFoundLabel: "Role permission",
+      inUseName: "role permission",
+      fallbackError: "Failed to delete role permission",
+    });
   }
 });
 

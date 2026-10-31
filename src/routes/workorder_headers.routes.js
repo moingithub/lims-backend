@@ -1,5 +1,5 @@
 const express = require("express");
-const { prisma } = require("../lib/common");
+const { prisma, sendDeleteErrorResponse } = require("../lib/common");
 const router = express.Router();
 // router initialization moved to top, remove duplicate
 
@@ -353,9 +353,10 @@ router.delete("/:id", async (req, res) => {
     await prisma.workorder_headers.delete({ where: { id } });
     res.json({ message: "Deleted" });
   } catch (err) {
-    res.status(500).json({
-      error: "Failed to delete workorder_header",
-      detail: err.message,
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Work order",
+      inUseName: "work order",
+      fallbackError: "Failed to delete work order",
     });
   }
 });
@@ -371,12 +372,10 @@ router.delete("/by-number/:work_order_number", async (req, res) => {
     });
     res.json({ message: "Deleted", deleted });
   } catch (err) {
-    if (err.code === "P2025") {
-      return res.status(404).json({ error: "workorder_header not found" });
-    }
-    res.status(500).json({
-      error: "Failed to delete workorder_header",
-      detail: err.message,
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Work order",
+      inUseName: "work order",
+      fallbackError: "Failed to delete work order",
     });
   }
 });

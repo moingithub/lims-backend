@@ -1,6 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 const authorize = require("../middleware/authorize");
 // Helper to remove sensitive/metadata fields from user objects before sending to clients
 function sanitizeUser(user) {
@@ -464,9 +468,11 @@ router.delete("/:id", authorize("users"), async (req, res) => {
     const deleted = await prisma.users.delete({ where: { id } });
     return res.json({ message: "User deleted", user: sanitizeUser(deleted) });
   } catch (error) {
-    if (error && error.code === "P2025")
-      return res.status(404).json({ error: "User not found" });
-    return res.status(500).json({ error: "Failed to delete user" });
+    return sendDeleteErrorResponse(res, error, {
+      notFoundLabel: "User",
+      inUseName: "user",
+      fallbackError: "Failed to delete user",
+    });
   }
 });
 

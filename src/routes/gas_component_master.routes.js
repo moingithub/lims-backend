@@ -1,5 +1,9 @@
 const express = require("express");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const {
+  prisma,
+  prismaErrorDetail,
+  sendDeleteErrorResponse,
+} = require("../lib/common");
 const authorize = require("../middleware/authorize");
 const logger = require("../lib/logger");
 
@@ -248,10 +252,11 @@ router.delete("/:id", authorize("gas_component_master"), async (req, res) => {
     await prisma.gas_component_master.delete({ where: { component_id: id } });
     return res.json({ message: "Gas component deleted" });
   } catch (err) {
-    if (err?.code === "P2025") {
-      return res.status(404).json({ error: "Gas component not found" });
-    }
-    return res.status(500).json({ error: "Failed to delete gas component" });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Gas component",
+      inUseName: "gas component",
+      fallbackError: "Failed to delete gas component",
+    });
   }
 });
 

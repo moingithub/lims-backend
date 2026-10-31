@@ -1,5 +1,5 @@
 const express = require("express");
-const { prisma } = require("../lib/common");
+const { prisma, sendDeleteErrorResponse } = require("../lib/common");
 const router = express.Router();
 
 // Helper: generate invoice_number like INV-20260309-0001
@@ -366,12 +366,11 @@ router.delete("/:id", async (req, res) => {
     await prisma.invoice_headers.delete({ where: { id } });
     res.json({ message: "Invoice deleted" });
   } catch (err) {
-    if (err.code === "P2025") {
-      return res.status(404).json({ error: "Invoice not found" });
-    }
-    res
-      .status(500)
-      .json({ error: "Failed to delete invoice", detail: err.message });
+    return sendDeleteErrorResponse(res, err, {
+      notFoundLabel: "Invoice",
+      inUseName: "invoice",
+      fallbackError: "Failed to delete invoice",
+    });
   }
 });
 

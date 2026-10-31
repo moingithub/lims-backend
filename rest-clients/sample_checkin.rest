@@ -122,11 +122,10 @@ Content-Type: application/json
   "effective_end_date": "31-05-2026",
   "sampled_by": "Omar Rodriguez",
   "analyzed_by": "Johannes Xie",
+  "analyzed_on": "2026-07-04T15:30:00.000Z",
   "authorized_by": "John Miller",
-  "base_condition": "14.65 psia and 60° F",
   "physical_constant": "GPA 2145-16",
   "field_h2s": 0.0009,
-  "pressure_base_factor": 0,
   "cost_code": "CC-001",
   "checkin_type": "Bottle",
   "invoice_ref_name": "WO",
@@ -165,8 +164,9 @@ Content-Type: application/json
   "effective_end_date": "31-05-2026",
   "sampled_by": "Omar Rodriguez",
   "analyzed_by": "Johannes Xie",
+  "analyzed_on": "2026-07-04T15:30:00.000Z",
   "authorized_by": "John Miller",
-  "base_condition": "14.65 psia and 60° F",
+  "base_condition": "14.65",
   "physical_constant": "GPA 2145-16"
 }
 

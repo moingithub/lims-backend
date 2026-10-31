@@ -26,6 +26,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
+  "analysis_type": "Gar Purity1",
   "description": "Updated description",
   "standard_rate": "110.00",
   "rushed_rate": "160.00",

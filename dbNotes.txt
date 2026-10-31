@@ -2,6 +2,7 @@
 npx prisma migrate reset
 npx prisma generate
 Execute script in db from prisma\additional-db-scripts.sql
+npx prisma db seed
 
 
 ---------Old------------------------

@@ -234,14 +234,11 @@ async function buildAnalysisReport(sampleCheckinId) {
       contact_person: blank(checkin.company_contact?.name),
     },
     report_information: {
-      method:
-        blank(checkin.analysis_pricing?.analysis_type) ||
-        blank(machineReport.method),
+      method: blank(checkin.analysis_pricing?.analysis_type),
       analysis_number: blank(checkin.analysis_number),
       cylinder_number: blank(checkin.cylinder_number),
-      analyzed_on: machineReport.analyzed_on,
-      analyzed_by:
-        blank(checkin.analyzed_by) || blank(machineReport.analyzed_by),
+      analyzed_on: formatAnalyzedOn(checkin.analyzed_on),
+      analyzed_by: blank(checkin.analyzed_by),
     },
     sample_information: {
       producer: blank(checkin.producer),
