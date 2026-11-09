@@ -29,6 +29,7 @@ Special field rules:
 - Sample_date: sample/collection date from the form (do not use key "Date").
 - sample_time: sample/collection time of day if present on the form.
 - amb_temp: ambient temperature (AMB Temp) if present on the form.
+- well_name: the well identifier from the form. Labels such as "Well/Lease", "Well/Facility", "Well / Facility", "Well Name", or similar wording all mean the same field — put that handwritten value in well_name only.
 Return STRICT JSON only.
 Schema:
 {
@@ -40,7 +41,7 @@ Schema:
   "Area": "",
   "Sampled_By": "",
   "Producer": "",
-  "Well_Lease": "",
+  "well_name": "",
   "Meter_Number": "",
   "Sample_Type": "",
   "Pressure": "",
@@ -80,6 +81,32 @@ function normalizeOcrOutput(parsedJson) {
     normalized.amb_temp = "";
   } else {
     normalized.amb_temp = String(normalized.amb_temp).trim();
+  }
+
+  const wellNameAlternates = [
+    "well_name",
+    "Well_Lease",
+    "Well_Lease_Name",
+    "Well_Name",
+    "WellName",
+    "Well_Facility",
+    "Well_Facility_Name",
+    "WellFacility",
+    "Well_Lease_Facility",
+  ];
+  let wellName = "";
+  for (const key of wellNameAlternates) {
+    const raw = normalized[key];
+    if (raw === undefined || raw === null) continue;
+    const text = String(raw).trim();
+    if (text) {
+      wellName = text;
+      break;
+    }
+  }
+  normalized.well_name = wellName;
+  for (const key of wellNameAlternates) {
+    if (key !== "well_name") delete normalized[key];
   }
 
   const normalizeNumberOnly = (value) => {

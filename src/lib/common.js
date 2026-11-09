@@ -302,6 +302,36 @@ async function reloadPermissionsCache() {
   return await loadPermissionsCache(true);
 }
 
+function reportDownloadFileNameSegment(value) {
+  if (value == null || String(value).trim() === "") return "blank";
+  return String(value).trim().replace(/[/\\?%*:|"<>]/g, "-");
+}
+
+function reportDownloadFileNameSampleDate(value) {
+  if (value == null || value === "") return "blank";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "blank";
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** analysis_number_well_name_meter_number_sample_date.xlsx */
+function buildAnalysisReportDownloadFileName({
+  analysis_number,
+  well_name,
+  meter_number,
+  sample_date,
+}) {
+  return [
+    reportDownloadFileNameSegment(analysis_number),
+    reportDownloadFileNameSegment(well_name),
+    reportDownloadFileNameSegment(meter_number),
+    reportDownloadFileNameSampleDate(sample_date),
+  ].join("_").concat(".xlsx");
+}
+
 module.exports = {
   prisma,
   isAdminRole,
@@ -318,4 +348,5 @@ module.exports = {
   reloadPermissionsCache,
   getRolePermissions,
   resolveModuleIdentifier,
+  buildAnalysisReportDownloadFileName,
 };

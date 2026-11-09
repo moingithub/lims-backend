@@ -1,7 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const { prisma, prismaErrorDetail } = require("../lib/common");
+const { prisma, prismaErrorDetail, buildAnalysisReportDownloadFileName } = require("../lib/common");
 const {
   createAnalysisReportWorkbook,
 } = require("../lib/exportAnalysisReportWorkbook");
@@ -240,6 +240,9 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
   try {
     const access = await assertSampleCheckinAccess(req, sampleCheckinId, {
       analysis_number: true,
+      well_name: true,
+      meter_number: true,
+      sample_date: true,
     });
     if (access.error) {
       return res.status(access.error.status).json(access.error.body);
@@ -268,7 +271,7 @@ router.post("/", authorize("sample_checkin"), async (req, res) => {
       templatePath: resolvedTemplatePath,
     });
 
-    const fileName = `${existing.analysis_number}-${templateName}`;
+    const fileName = buildAnalysisReportDownloadFileName(existing);
 
     res.set({
       "Content-Type": EXCEL_CONTENT_TYPE,

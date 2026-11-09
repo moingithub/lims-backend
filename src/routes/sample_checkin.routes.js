@@ -15,6 +15,7 @@ const {
   getAllowedValuesFromConstraints,
   normalizeToAllowed,
   sendDeleteErrorResponse,
+  buildAnalysisReportDownloadFileName,
 } = require("../lib/common");
 const authorize = require("../middleware/authorize");
 const logger = require("../lib/logger");
@@ -620,7 +621,13 @@ router.get("/:sampleCheckinId/analysis-report/download", async (req, res) => {
   try {
     const existing = await prisma.sample_checkin.findUnique({
       where: { id: sampleCheckinId },
-      select: { company_id: true, analysis_number: true },
+      select: {
+        company_id: true,
+        analysis_number: true,
+        well_name: true,
+        meter_number: true,
+        sample_date: true,
+      },
     });
     if (!existing) {
       return res.status(404).json({ error: "Sample check-in not found" });
@@ -632,7 +639,7 @@ router.get("/:sampleCheckinId/analysis-report/download", async (req, res) => {
     }
 
     const workbookBuffer = await createAnalysisReportWorkbook(sampleCheckinId);
-    const fileName = `Analysis-${existing.analysis_number || sampleCheckinId}.xlsx`;
+    const fileName = buildAnalysisReportDownloadFileName(existing);
     res.set({
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
