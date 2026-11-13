@@ -442,8 +442,8 @@ async function main() {
         // per additional-db-scripts.sql: cylinder_type IN ('Gas','Liquid')
         cylinder_type: "Gas",
         track_inventory: true,
-        // per additional-db-scripts.sql: location IN ('Clean Cylinder','Checked Out','Checked In')
-        location: "Clean Cylinder",
+        // per additional-db-scripts.sql: status IN ('Clean Cylinder','Checked Out','Checked In')
+        status: "Clean Cylinder",
         active: true,
         created_by: { connect: { id: adminUser.id } },
       },

@@ -31,11 +31,14 @@ ALTER COLUMN cylinder_type SET NOT NULL;
 
 
 ALTER TABLE cylinders
-ADD CONSTRAINT chk_location
-CHECK (location IN ('Clean Cylinder', 'Checked Out','Checked In'));
+ADD CONSTRAINT chk_cylinder_status
+CHECK (status IN ('Clean Cylinder', 'Checked Out','Checked In'));
 
 ALTER TABLE cylinders
-ALTER COLUMN location SET NOT NULL;
+ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE cylinders
+ALTER COLUMN status SET DEFAULT 'Clean Cylinder';
 
 --------------------------------------------------
 CREATE VIEW open_checkout AS

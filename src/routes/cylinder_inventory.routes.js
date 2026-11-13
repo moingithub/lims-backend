@@ -2,41 +2,36 @@ const express = require("express");
 const { prisma } = require("../lib/common");
 const router = express.Router();
 
-// Status logic from user
-const getStatusFromLocation = (location) => {
-  switch (location) {
-    case "Clean Cylinder":
-      return "Available";
-    case "Checked Out":
-      return "In Use";
-    case "Checked In":
-      return "In Use";
-    default:
-      return "Unknown";
-  }
-};
+const KNOWN_CYLINDER_STATUSES = new Set([
+  "Clean Cylinder",
+  "Checked Out",
+  "Checked In",
+]);
+
+function normalizeInventoryStatus(status) {
+  if (status == null || String(status).trim() === "") return "Unknown";
+  const text = String(status).trim();
+  return KNOWN_CYLINDER_STATUSES.has(text) ? text : "Unknown";
+}
 
 // GET /api/cylinder-inventory
 router.get("/", async (req, res) => {
   try {
-    // Get all cylinders
     const cylinders = await prisma.cylinders.findMany({
+      where: { active: true },
       orderBy: { id: "asc" },
     });
 
-    // Get all active checkouts (not returned)
     const checkouts = await prisma.cylinder_checkout.findMany({
       where: { is_returned: false },
     });
 
-    // Get all companies (for lookup)
     const companies = await prisma.companies.findMany();
     const companyMap = {};
     companies.forEach((c) => {
       companyMap[c.id] = c;
     });
 
-    // Map cylinder id to checkout
     const checkoutMap = {};
     checkouts.forEach((co) => {
       checkoutMap[co.cylinder_id] = co;
@@ -48,23 +43,21 @@ router.get("/", async (req, res) => {
       let issued_to = "";
       let since_days = "";
       let email = "";
-      let location = cyl.location;
+      let status = normalizeInventoryStatus(cyl.status);
       if (checkout) {
         const company = companyMap[checkout.company_id];
         issued_to = company ? company.name : "";
         email = company ? company.email || "" : "";
-        location = "Checked Out";
-        const since = Math.floor(
+        status = "Checked Out";
+        since_days = Math.floor(
           (now - checkout.created_at) / (1000 * 60 * 60 * 24),
         );
-        since_days = since;
       }
       return {
         id: cyl.id,
         cylinder_number: cyl.cylinder_number,
         cylinder_type: cyl.cylinder_type,
-        location,
-        status: getStatusFromLocation(location),
+        status,
         issued_to,
         since_days,
         email,

@@ -9,6 +9,39 @@ const {
 const authorize = require("../middleware/authorize");
 
 const router = express.Router();
+const DEFAULT_CYLINDER_STATUS = "Clean Cylinder";
+
+async function resolveAllowedCylinderStatus() {
+  return (
+    (await getAllowedValuesFromConstraints("cylinders", "status")) || [
+      "Clean Cylinder",
+      "Checked Out",
+      "Checked In",
+    ]
+  );
+}
+
+async function validateCylinderStatus(status, { required = false } = {}) {
+  const raw =
+    status === undefined || status === null ? "" : String(status).trim();
+  if (!raw) {
+    if (required) {
+      return { error: "status is required" };
+    }
+    return { value: DEFAULT_CYLINDER_STATUS };
+  }
+  const allowed = await resolveAllowedCylinderStatus();
+  const finalStatus = normalizeToAllowed(raw, allowed);
+  if (!allowed.includes(finalStatus)) {
+    return {
+      error:
+        allowed.length > 0
+          ? `Invalid status. Allowed: ${allowed.join(", ")}`
+          : "Invalid status",
+    };
+  }
+  return { value: finalStatus };
+}
 
 // List cylinders
 router.get("/", async (req, res) => {
@@ -40,17 +73,12 @@ router.post("/", authorize("cylinders"), async (req, res) => {
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: "Login required" });
     }
-    const {
-      cylinder_number,
-      cylinder_type,
-      track_inventory,
-      location,
-      active,
-    } = req.body || {};
+    const { cylinder_number, cylinder_type, track_inventory, status, active } =
+      req.body || {};
 
-    if (!cylinder_number || !cylinder_type || !location) {
+    if (!cylinder_number || !cylinder_type) {
       return res.status(400).json({
-        error: "cylinder_number, cylinder_type and location are required",
+        error: "cylinder_number and cylinder_type are required",
       });
     }
 
@@ -73,17 +101,9 @@ router.post("/", authorize("cylinders"), async (req, res) => {
       });
     }
 
-    // Normalize and validate location against DB CHECK constraint
-    const allowedLocations =
-      (await getAllowedValuesFromConstraints("cylinders", "location")) || [];
-    const finalLocation = normalizeToAllowed(location, allowedLocations);
-    if (!allowedLocations.includes(finalLocation)) {
-      return res.status(400).json({
-        error:
-          allowedLocations.length > 0
-            ? `Invalid location. Allowed: ${allowedLocations.join(", ")}`
-            : "Invalid location",
-      });
+    const statusResult = await validateCylinderStatus(status);
+    if (statusResult.error) {
+      return res.status(400).json({ error: statusResult.error });
     }
 
     const created = await prisma.cylinders.create({
@@ -92,7 +112,7 @@ router.post("/", authorize("cylinders"), async (req, res) => {
         cylinder_type: finalCylinderType,
         track_inventory:
           typeof track_inventory === "boolean" ? track_inventory : true,
-        location: finalLocation,
+        status: statusResult.value,
         active: typeof active === "boolean" ? active : true,
         created_by:
           req.user && req.user.userId
@@ -118,13 +138,8 @@ router.put("/:id", authorize("cylinders"), async (req, res) => {
     return res.status(400).json({ error: "Invalid id" });
 
   try {
-    const {
-      cylinder_number,
-      cylinder_type,
-      track_inventory,
-      location,
-      active,
-    } = req.body || {};
+    const { cylinder_number, cylinder_type, track_inventory, status, active } =
+      req.body || {};
 
     const updates = {};
     if (cylinder_number !== undefined)
@@ -154,19 +169,14 @@ router.put("/:id", authorize("cylinders"), async (req, res) => {
       updates.cylinder_type = finalCylinderType;
     }
 
-    if (location !== undefined) {
-      const allowedLocations =
-        (await getAllowedValuesFromConstraints("cylinders", "location")) || [];
-      const finalLocation = normalizeToAllowed(location, allowedLocations);
-      if (!allowedLocations.includes(finalLocation)) {
-        return res.status(400).json({
-          error:
-            allowedLocations.length > 0
-              ? `Invalid location. Allowed: ${allowedLocations.join(", ")}`
-              : "Invalid location",
-        });
+    if (status !== undefined) {
+      const statusResult = await validateCylinderStatus(status, {
+        required: true,
+      });
+      if (statusResult.error) {
+        return res.status(400).json({ error: statusResult.error });
       }
-      updates.location = finalLocation;
+      updates.status = statusResult.value;
     }
 
     const updated = await prisma.cylinders.update({

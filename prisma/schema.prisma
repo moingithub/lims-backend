@@ -168,7 +168,7 @@ model cylinders {
   cylinder_number   String              @unique
   cylinder_type     String
   track_inventory   Boolean             @default(true)
-  location          String
+  status            String              @default("Clean Cylinder")
   active            Boolean             @default(true)
   created_by_id     Int
   created_at        DateTime            @default(now())
@@ -238,7 +238,7 @@ model sample_checkin {
   sample_type              String
   flow_rate                String?
   pressure                 String?
-  pressure_unit            String?
+  pressure_unit            String
   pressure_measured        String?
   temperature              String?
   amb_temp                 String?
