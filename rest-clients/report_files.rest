@@ -14,7 +14,8 @@ Content-Type: application/json
   "analyzed_on": "2026-07-04T15:30:00.000Z",
   "analyzed_by": "Johannes Xie",
   "effective_start_date": "01-05-2026",
-  "effective_end_date": "31-05-2026"
+  "effective_end_date": "31-05-2026",
+  "sample_method": "Purge & Fill"
 }
 
 ### Generate filled report (.xlsx download)

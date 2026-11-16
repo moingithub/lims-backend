@@ -232,6 +232,13 @@ async function createAnalysisReportWorkbook(
       address: "H14",
       value: formatSampleDateTime(checkin.sample_date, checkin.sample_time),
     },
+    {
+      address: "H15",
+      value:
+        checkin.sample_method != null && String(checkin.sample_method).trim()
+          ? String(checkin.sample_method).trim()
+          : "Purge & Fill",
+    },
     { address: "H16", value: checkin.sample_type },
     { address: "H17", value: asNumber(checkin.field_h2s) },
     {

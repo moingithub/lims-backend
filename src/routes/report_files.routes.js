@@ -74,6 +74,7 @@ const REPORT_FILE_PATCH_FIELD_NAMES = [
   "analyzed_by",
   "effective_start_date",
   "effective_end_date",
+  "sample_method",
 ];
 
 function buildReportFileCheckinUpdateData(body) {
@@ -98,6 +99,10 @@ function buildReportFileCheckinUpdateData(body) {
   }
   if (Object.prototype.hasOwnProperty.call(body, "analyzed_by")) {
     data.analyzed_by = normalizeOptionalString(body.analyzed_by);
+    hasAny = true;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "sample_method")) {
+    data.sample_method = normalizeOptionalString(body.sample_method);
     hasAny = true;
   }
 
