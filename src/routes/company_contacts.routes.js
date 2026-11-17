@@ -28,7 +28,7 @@ router.get("/", async (req, res) => {
     }
     const list = await prisma.company_contacts.findMany({
       where,
-      orderBy: { id: "asc" },
+      orderBy: [{ name: "asc" }, { id: "asc" }],
     });
     return res.json(list);
   } catch (err) {

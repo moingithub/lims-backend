@@ -46,7 +46,9 @@ async function validateCylinderStatus(status, { required = false } = {}) {
 // List cylinders
 router.get("/", async (req, res) => {
   try {
-    const list = await prisma.cylinders.findMany({ orderBy: { id: "asc" } });
+    const list = await prisma.cylinders.findMany({
+      orderBy: [{ cylinder_number: "asc" }, { id: "asc" }],
+    });
     return res.json(list);
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch cylinders" });

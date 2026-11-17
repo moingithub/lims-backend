@@ -65,6 +65,16 @@ function formatSampleDateTime(sampleDate, sampleTime) {
   return timePart ? `${datePart} ${timePart}` : datePart;
 }
 
+function formatAnalyzedDateTime(value) {
+  const date = asDate(value);
+  if (!date) return null;
+  const time =
+    date.getUTCHours() === 0 && date.getUTCMinutes() === 0
+      ? ""
+      : `${date.getUTCHours()}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
+  return formatSampleDateTime(date, time);
+}
+
 function normalizePressureUnit(unit) {
   if (unit == null || unit === "") return null;
   return String(unit).trim().toLowerCase();
@@ -195,7 +205,7 @@ async function createAnalysisReportWorkbook(
     { address: "B7", value: method },
     { address: "B8", value: checkin.analysis_number },
     { address: "B9", value: checkin.cylinder_number },
-    { address: "E7", value: analyzedOnValue },
+    { address: "E7", value: formatAnalyzedDateTime(checkin.analyzed_on) },
     { address: "E8", value: checkin.analyzed_by },
     { address: "H7", value: checkin.company?.name },
     { address: "H8", value: checkin.company_contact?.name },

@@ -46,5 +46,5 @@ Content-Type: application/json
 }
 
 ### Delete checkout
-DELETE {{baseUrl}}/cylinder_checkout/1
+DELETE {{baseUrl}}/cylinder_checkout/10
 Authorization: Bearer {{authToken}}

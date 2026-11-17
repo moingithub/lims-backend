@@ -28,7 +28,7 @@ function parseMoneyField(value, fieldName) {
 router.get("/", async (req, res) => {
   try {
     const list = await prisma.analysis_pricing.findMany({
-      orderBy: { id: "asc" },
+      orderBy: [{ analysis_type: "asc" }, { id: "asc" }],
     });
     return res.json(list);
   } catch (err) {

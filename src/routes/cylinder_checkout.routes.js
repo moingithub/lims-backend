@@ -292,15 +292,32 @@ router.delete("/:id", authorize("cylinder_checkout"), async (req, res) => {
   if (!Number.isInteger(id) || id <= 0)
     return res.status(400).json({ error: "Invalid id" });
   try {
-    const existing = await prisma.cylinder_checkout.findUnique({
-      where: { id },
+    const result = await prisma.$transaction(async (tx) => {
+      const existing = await tx.cylinder_checkout.findUnique({
+        where: { id },
+      });
+      if (!existing) return "not-found";
+      if (
+        isCustomerWithCompany(req) &&
+        Number(existing.company_id) !== Number(req.user.company_id)
+      ) {
+        return "forbidden";
+      }
+
+      if (!existing.is_returned) {
+        await tx.cylinders.updateMany({
+          where: { id: existing.cylinder_id, status: "Checked Out" },
+          data: { status: "Clean Cylinder" },
+        });
+      }
+      await tx.cylinder_checkout.delete({ where: { id } });
+      return "deleted";
     });
-    if (!existing) return res.status(404).json({ error: "Checkout not found" });
-    if (isCustomerWithCompany(req)) {
-      if (Number(existing.company_id) !== Number(req.user.company_id))
-        return res.status(403).json({ error: "Forbidden" });
-    }
-    await prisma.cylinder_checkout.delete({ where: { id } });
+
+    if (result === "not-found")
+      return res.status(404).json({ error: "Checkout not found" });
+    if (result === "forbidden")
+      return res.status(403).json({ error: "Forbidden" });
     return res.json({ message: "Checkout deleted" });
   } catch (err) {
     return sendDeleteErrorResponse(res, err, {

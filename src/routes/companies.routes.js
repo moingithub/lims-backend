@@ -38,11 +38,14 @@ router.get("/", async (req, res) => {
     if (isCustomerWithCompany(req)) {
       const list = await prisma.companies.findMany({
         where: { id: Number(req.user.company_id) },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
       });
       return res.json(list);
     }
 
-    const list = await prisma.companies.findMany({ orderBy: { id: "asc" } });
+    const list = await prisma.companies.findMany({
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+    });
     return res.json(list);
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch companies" });

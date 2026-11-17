@@ -37,7 +37,7 @@ router.get("/", async (req, res) => {
     }
     const list = await prisma.company_areas.findMany({
       where,
-      orderBy: { id: "asc" },
+      orderBy: [{ area: "asc" }, { id: "asc" }],
     });
     return res.json(list);
   } catch (err) {

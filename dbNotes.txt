@@ -54,3 +54,34 @@ npx prisma migrate deploy
 # then (re)start the app
 
 -- This is github pull/push test
+
+
+---- AWS Ubuntu Navigate
+Switch to the lims user:
+sudo su - lims
+
+To return to user ubuntu:
+exit
+
+su - lims
+whoami
+
+cd /var/www/html/lims/lims-frontend
+
+Copy the file from File Zila in folder build upload 
+Then using putty do This
+sudo -i
+
+cp -a /home/ubuntu/build_upload/build /var/www/html/lims/lims-frontend/
+
+
+
+---Prisma commands  ----
+npx prisma validate # Validate your schema.prisma syntax
+npx prisma migrate status  # Sync Status
+npx prisma migrate dev  # To apply migrations in development
+npx prisma migrate deploy # To apply migrations in production
+
+---
+If API is using a stale generated Prisma Client
+npx prisma generate
