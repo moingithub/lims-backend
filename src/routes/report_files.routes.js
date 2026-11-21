@@ -143,6 +143,38 @@ async function assertSampleCheckinAccess(req, sampleCheckinId, extraSelect = {})
   return { existing };
 }
 
+function parseReportSentBody(body) {
+  if (!Object.prototype.hasOwnProperty.call(body || {}, "report_sent")) {
+    return { error: "report_sent is required" };
+  }
+  const value = body.report_sent;
+  if (value === null || value === "") {
+    return { error: "report_sent must be true or false" };
+  }
+  if (typeof value === "boolean") {
+    return { value };
+  }
+  if (value === "true" || value === 1 || value === "1") {
+    return { value: true };
+  }
+  if (value === "false" || value === 0 || value === "0") {
+    return { value: false };
+  }
+  return { error: "report_sent must be true or false" };
+}
+
+async function respondReportFileListRow(res, sampleCheckinId) {
+  const row = await prisma.report_file_list.findFirst({
+    where: { sample_checkin_id: sampleCheckinId },
+  });
+  if (!row) {
+    return res.status(404).json({
+      error: "Updated check-in not found in report file list",
+    });
+  }
+  return res.json(row);
+}
+
 router.get("/", authorize("sample_checkin"), async (req, res) => {
   try {
     const where = {};
@@ -167,6 +199,48 @@ router.get("/", authorize("sample_checkin"), async (req, res) => {
     });
   }
 });
+
+router.patch(
+  "/:sample_checkin_id/report_sent",
+  authorize("sample_checkin"),
+  async (req, res) => {
+    const sampleCheckinId = Number(req.params.sample_checkin_id);
+    if (!Number.isInteger(sampleCheckinId) || sampleCheckinId <= 0) {
+      return res.status(400).json({ error: "Invalid sample_checkin_id" });
+    }
+
+    const parsed = parseReportSentBody(req.body);
+    if (parsed.error) {
+      return res.status(400).json({ error: parsed.error });
+    }
+
+    try {
+      const access = await assertSampleCheckinAccess(req, sampleCheckinId);
+      if (access.error) {
+        return res.status(access.error.status).json(access.error.body);
+      }
+
+      await prisma.sample_checkin.update({
+        where: { id: sampleCheckinId },
+        data: { report_sent: parsed.value },
+      });
+
+      return respondReportFileListRow(res, sampleCheckinId);
+    } catch (err) {
+      logger.error("Failed to update report_sent", {
+        message: err?.message,
+        code: err?.code,
+        meta: err?.meta,
+        sampleCheckinId,
+      });
+      const isProd = process.env.NODE_ENV === "production";
+      return res.status(500).json({
+        error: "Failed to update report_sent",
+        detail: prismaErrorDetail(err) ?? (!isProd ? err?.message : null),
+      });
+    }
+  },
+);
 
 router.patch(
   "/:sample_checkin_id",
@@ -202,15 +276,7 @@ router.patch(
         data,
       });
 
-      const row = await prisma.report_file_list.findFirst({
-        where: { sample_checkin_id: sampleCheckinId },
-      });
-      if (!row) {
-        return res.status(404).json({
-          error: "Updated check-in not found in report file list",
-        });
-      }
-      return res.json(row);
+      return respondReportFileListRow(res, sampleCheckinId);
     } catch (err) {
       logger.error("Failed to update report file check-in", {
         message: err?.message,

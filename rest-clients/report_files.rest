@@ -2,7 +2,7 @@
 GET {{baseUrl}}/report_files
 Authorization: Bearer {{authToken}}
 
-### Update report fields on sample check-in (returns report_file_list row)
+### Update report prep fields on sample check-in (returns report_file_list row)
 PATCH {{baseUrl}}/report_files/1
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -16,6 +16,15 @@ Content-Type: application/json
   "effective_start_date": "01-05-2026",
   "effective_end_date": "31-05-2026",
   "sample_method": "Purge & Fill"
+}
+
+### Mark report sent to customer (report_sent only)
+PATCH {{baseUrl}}/report_files/1/report_sent
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "report_sent": true
 }
 
 ### Generate filled report (.xlsx download)

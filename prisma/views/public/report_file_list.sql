@@ -18,7 +18,8 @@ SELECT
   sc.analyzed_on,
   sc.analyzed_by,
   sc.effective_start_date,
-  sc.effective_end_date
+  sc.effective_end_date,
+  sc.report_sent
 FROM sample_checkin sc
 LEFT JOIN companies c ON c.id = sc.company_id
 LEFT JOIN analysis_pricing ap ON ap.id = sc.analysis_type_id;

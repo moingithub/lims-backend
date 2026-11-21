@@ -267,6 +267,7 @@ model sample_checkin {
   scanned_tag_image        String?
   work_order_number        String?
   status                   String
+  report_sent              Boolean                 @default(false)
   standard_rate            Decimal                 @default(0) @db.Decimal(12, 2)
   applied_rate             Decimal                 @default(0) @db.Decimal(12, 2)
   sample_fee               Decimal                 @default(0) @db.Decimal(12, 2)
@@ -528,4 +529,5 @@ view report_file_list {
   analyzed_by              String?
   effective_start_date     DateTime? @db.Date
   effective_end_date       DateTime? @db.Date
+  report_sent              Boolean?
 }
